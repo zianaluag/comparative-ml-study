@@ -5,7 +5,7 @@
 **Group Members:**
 
 * Aluag, Zander Ian C. (zianaluag)
-* Caraig, Bernard Alejandro C. (hero_nest)
+* Caraig, Bernard Alejandro C. (herio-nn)
 * Perez, Desmond Rainier B. (desmondperez)
 * Tandang, Frannieczeska Erene U. (ririlinn)
 
