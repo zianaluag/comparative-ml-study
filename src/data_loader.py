@@ -1,18 +1,38 @@
 import csv
 from datetime import datetime
+import os
 
-def load_csv(path):
+BASE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+DATASET_DIR = os.path.join(BASE_DIR, "datasets")
+
+
+def get_dataset_path():
+    for file in os.listdir(DATASET_DIR):
+        if file.endswith(".csv"):
+            return os.path.join(DATASET_DIR, file)
+    return None
+
+
+def load_csv():
     rows = []
     skipped = 0
     seen_ids = []
 
+    # Load file by using get_dataset_path helper by joining the base dir and dataset dir
+    path = get_dataset_path()
+    if path is None:
+        print("No csv file found in dataset folder\n")
+        return rows
+    
     try:
-        with open(path, newline="") as f:
+        with open(path, newline="", encoding="utf-8-sig") as f:
             reader = csv.DictReader(f)
             for row in reader:
+                # Checks if infra project is a flood control and drainage project
                 if row["category"].strip != "Flood Control and Drainage":
                     continue
 
+                # Checks for inconsistencies in data (ie missing data)
                 try: 
                     budget = float(row["budget"])
                     progress = float(row["budget"])
@@ -51,7 +71,7 @@ def load_csv(path):
                     "contractEffectivityDate": contract_eff_date,
                     "expiryDate": expiry_date,
                 })
-
+    
     except OSError:
         print("Error loading file")
 
