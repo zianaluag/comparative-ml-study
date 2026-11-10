@@ -35,7 +35,7 @@ def load_csv():
                 # Checks for inconsistencies in data (ie missing data)
                 try: 
                     budget = float(row["budget"])
-                    progress = float(row["budget"])
+                    progress = float(row["progress"])
                     start_date = datetime.strptime(row["startDate"].strip(), "%Y-%m-%d")
                     completion_date = datetime.strptime(row["completionDate"].strip(), "%Y-%m-%d")
                     infra_year = int(row["infraYear"])
@@ -90,5 +90,3 @@ def to_columns(rows, cols):
         columns.append(column)
 
     return columns
-
-load_csv()
