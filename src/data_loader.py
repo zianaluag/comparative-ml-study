@@ -90,5 +90,3 @@ def to_columns(rows, cols):
         columns.append(column)
 
     return columns
-
-load_csv()
