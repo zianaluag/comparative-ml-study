@@ -29,7 +29,7 @@ def load_csv():
             reader = csv.DictReader(f)
             for row in reader:
                 # Checks if infra project is a flood control and drainage project
-                if row["category"].strip != "Flood Control and Drainage":
+                if row["category"].strip() != "Flood Control and Drainage":
                     continue
 
                 # Checks for inconsistencies in data (ie missing data)
@@ -41,7 +41,7 @@ def load_csv():
                     infra_year = int(row["infraYear"])
                     report_count = float(row["reportCount"])
                     contract_eff_date = datetime.strptime(row["contractEffectivityDate"].strip(), "%Y-%m-%d")
-                    expiry_date = datetime.striptime(row["expiryDate"].strip(), "%Y-%m-%d")
+                    expiry_date = datetime.strptime(row["expiryDate"].strip(), "%Y-%m-%d")
                 except(ValueError,TypeError):
                     skipped += 1
                     continue
@@ -90,3 +90,5 @@ def to_columns(rows, cols):
         columns.append(column)
 
     return columns
+
+load_csv()
