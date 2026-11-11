@@ -35,59 +35,94 @@ def build_status(row):
     return None
 
 
-# Return numerical data from budget, progress, infrastructure year, and the planned duration
-def build_num_data(row):
-    return[
-        row["budget"],
-        row["progress"],
-        row["infraYear"],
-        planned_duration(row),
-    ]
+#get all relevant features to predict reliability of a contractor
+def build_features(row):
+    return {
+        "budget": row["budget"],
+        "infraYear": row["infraYear"],
+        "planned_duration": planned_duration(row),
+        "region": row["region"],
+        "province": row["province"],
+        "category": row["category"],
+        "contractor": row["contractor"]
+    }
 
 
 # The dataset to be used be the ML model to train data
-def build_dataset(rows):
-    num_data = []
+def build_dataset(rows, max_year=2025):
+    features = []
     statuses = []
     proj_ids = []
 
     for row in rows:
+        #projects started in 2026 aren't included bcs the usual contract expiry is year after start
+        if row["infraYear"] > max_year:
+            continue
+
         status = build_status(row)
         if status is None:
             continue
 
         duration = planned_duration(row)
-
         if duration < 0:
             continue
 
-        num_data.append(build_num_data(row))
+        features.append(build_features(row))
         statuses.append(status)
         proj_ids.append(row["contractId"])
 
-    return num_data, statuses, proj_ids
+    return features, statuses, proj_ids
 
 
-# split the data set to train and test data using an 80/20 split
-def split_dataset(num_data, status, proj_ids, test_size=0.2):
-    combined = list(zip(num_data, status, proj_ids))
-
-    random.shuffle(combined)
+#split the data set to train and test data using an 80/20, split, from less to more recent
+def split_dataset(features, status, proj_ids, test_size=0.2):
+    combined = list(zip(features, status, proj_ids))
+    combined.sort(key=lambda x: x[0]["infraYear"])
 
     train_size = int(len(combined) * (1 - test_size))
-    train_data = combined[:train_size]
-    test_data = combined[train_size:]
+    train_data = combined[:train_size]#aka the past data
+    test_data = combined[train_size:]#aka the future data
 
-    num_train = [data[0] for data in train_data]
+    feat_train = [data[0] for data in train_data]
     status_train = [data[1] for data in train_data]
     id_train = [data[2] for data in train_data]
 
-    num_test = [data[0] for data in test_data]
+    feat_test = [data[0] for data in test_data]
     status_test = [data[1] for data in test_data]
     id_test = [data[2] for data in test_data]
 
-    return num_train, num_test, status_train, status_test, id_train, id_test
+    return feat_train, feat_test, status_train, status_test, id_train, id_test
 
+def apply_encoding(data_list, cat_columns, frequencies):
+    encoded_data = []
+    for row in data_list:
+        # Start with base numerical features
+        encoded_row = [row["budget"], row["infraYear"], row["planned_duration"]]
+        
+        # Append the learned frequency score for each categorical column
+        for col in cat_columns:
+            # If a test category was never seen during training, default to 0.0 frequency
+            encoded_row.append(frequencies[col].get(row[col], 0.0))
+        
+        encoded_data.append(encoded_row)
+        
+    return encoded_data
+
+def encode_categoricals(train_features, test_features, cat_columns):
+    frequencies = {col: {} for col in cat_columns}
+    #learn frequencies from just the training data/in order to not get clairvoyance from the test data
+    for row in train_features:
+        for col in cat_columns:
+            val = row[col]
+            frequencies[col][val] = frequencies[col].get(val, 0) + 1
+            
+    train_size = len(train_features)
+    for col in cat_columns:#gives us the frequencies of the categories
+        for val in frequencies[col]:
+            frequencies[col][val] /= train_size
+    encoded_train = apply_encoding(train_features, cat_columns, frequencies)
+    encoded_test = apply_encoding(test_features, cat_columns, frequencies)
+    return encoded_train, encoded_test
 
 # apply normalization to the numerical statistics
 def normalizer(num_stats, means, std_devs):
@@ -140,20 +175,22 @@ if __name__ == "__main__":
 
     print(f"Loaded {len(rows)} rows")
 
-    num_data, statuses, proj_ids = build_dataset(rows)
+    features, statuses, proj_ids = build_dataset(rows)
 
-    print(f"Built dataset: {len(num_data)} valid projects")
+    print(f"Built dataset: {len(features)} valid projects")
     print(f"Class 0: {statuses.count(0)}")
     print(f"Class 1: {statuses.count(1)}")
 
-    num_train, num_test, status_train, status_test, id_train, id_test = split_dataset(
-        num_data, statuses, proj_ids
+    feat_train, feat_test, status_train, status_test, id_train, id_test = split_dataset(
+        features, statuses, proj_ids
     )
 
-    print(f"Training samples: {len(num_train)}")
-    print(f"Testing samples: {len(num_test)}")
-
-    normalized_train, normalized_test = normalize(num_train, num_test)
+    print(f"Training samples: {len(feat_train)}")
+    print(f"Testing samples: {len(feat_test)}")
+    cat_columns = ["region", "province", "category", "contractor"]
+    encoded_train, encoded_test = encode_categoricals(feat_train, feat_test, cat_columns)
+    
+    normalized_train, normalized_test = normalize(encoded_train, encoded_test)
 
     print("Normalization complete...")
     print(f"Training features: {len(normalized_train)}")
