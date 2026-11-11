@@ -16,7 +16,7 @@ def get_dataset_path():
 def load_csv():
     rows = []
     skipped = 0
-    seen_ids = []
+    seen_ids = set() # uses a hash table to check for duplicate ids instantly
 
     # Load file by using get_dataset_path helper by joining the base dir and dataset dir
     path = get_dataset_path()
@@ -28,10 +28,6 @@ def load_csv():
         with open(path, newline="", encoding="utf-8-sig") as f:
             reader = csv.DictReader(f)
             for row in reader:
-                # Checks if infra project is a flood control and drainage project
-                if row["category"].strip() != "Flood Control and Drainage":
-                    continue
-
                 # Checks for inconsistencies in data (ie missing data)
                 try: 
                     budget = float(row["budget"])
@@ -50,7 +46,7 @@ def load_csv():
                 if contract_id in seen_ids:
                     skipped += 1
                     continue
-                seen_ids.append(contract_id)
+                seen_ids.add(contract_id)
 
                 rows.append({
                     "contractId": contract_id,
