@@ -1,0 +1,183 @@
+import math
+import numpy as np
+
+
+def sigmoid(z):
+    # Calculates sigmoid activation bound between 0 and 1
+    z_clipped = np.clip(z, -500.0, 500.0)
+    return 1.0 / (1.0 + np.exp(-z_clipped))
+
+
+def fit_spline_transform(X_train_num, num_knots=2):
+    # Learns percentile knot locations for numerical features from training data
+    knots_per_feature = []
+    num_rows = len(X_train_num)
+
+    # Process budget (0), infraYear (1), and planned_duration (2)
+    for col_idx in range(3):
+        col_values = []
+        for row in X_train_num:
+            col_values.append(row[col_idx])
+
+        col_values.sort()
+        feature_knots = []
+
+        for k in range(1, num_knots + 1):
+            percentile_index = int((k / (num_knots + 1)) * num_rows)
+            feature_knots.append(col_values[percentile_index])
+
+        knots_per_feature.append(feature_knots)
+
+    return knots_per_feature
+
+
+def transform_features(X_data, knots_per_feature):
+    # Expands continuous features using piecewise quadratic truncated basis terms
+    expanded_rows = []
+
+    for row in X_data:
+        new_row = []
+
+        # Numerical features: linear + quadratic + truncated knot terms
+        for col_idx in range(3):
+            val = row[col_idx]
+            new_row.append(val)
+            new_row.append(val ** 2)
+
+            knots = knots_per_feature[col_idx]
+            for knot in knots:
+                diff = val - knot
+                if diff > 0:
+                    new_row.append(diff ** 2)
+                else:
+                    new_row.append(0.0)
+
+        # Categorical frequency features: retained as linear terms
+        for col_idx in range(3, len(row)):
+            new_row.append(row[col_idx])
+
+        expanded_rows.append(new_row)
+
+    return np.array(expanded_rows)
+
+
+def add_intercept(X):
+    # Prepends intercept bias column (x0 = 1.0)
+    num_samples = X.shape[0]
+    ones_column = np.ones((num_samples, 1))
+    return np.hstack((ones_column, X))
+
+
+def calculate_loss(y_true, y_pred, weights, l2_reg=0.01):
+    # Calculates Binary Cross Entropy loss with L2 penalty
+    n_samples = len(y_true)
+    eps = 1e-15
+    y_pred_bounded = np.clip(y_pred, eps, 1.0 - eps)
+
+    bce_loss = 0.0
+    for i in range(n_samples):
+        y = y_true[i]
+        p = y_pred_bounded[i]
+        bce_loss += -(y * math.log(p) + (1.0 - y) * math.log(1.0 - p))
+
+    bce_loss = bce_loss / n_samples
+
+    # Regularization penalty excluding bias term (w0)
+    l2_penalty = 0.0
+    for w in weights[1:]:
+        l2_penalty += w * w
+
+    l2_penalty = (l2_reg / (2.0 * n_samples)) * l2_penalty
+
+    return bce_loss + l2_penalty
+
+
+def calculate_gradients(X, y_true, y_pred, weights, l2_reg=0.01):
+    # Computes loss gradients with respect to model parameters
+    n_samples = X.shape[0]
+    errors = y_pred - y_true
+
+    gradients = np.dot(X.T, errors) / n_samples
+
+    for j in range(1, len(weights)):
+        gradients[j] += (l2_reg / n_samples) * weights[j]
+
+    return gradients
+
+
+def train_model(X_train, y_train, learning_rate=0.1, epochs=200, l2_reg=0.01):
+    # Optimizes model weights using Gradient Descent
+    n_samples, n_features = X_train.shape
+    weights = np.zeros(n_features)
+    y_train_arr = np.array(y_train)
+
+    loss_history = []
+
+    for epoch in range(epochs):
+        linear_output = np.dot(X_train, weights)
+        y_pred = sigmoid(linear_output)
+
+        loss = calculate_loss(y_train_arr, y_pred, weights, l2_reg)
+        loss_history.append(loss)
+
+        gradients = calculate_gradients(X_train, y_train_arr, y_pred, weights, l2_reg)
+        weights -= learning_rate * gradients
+
+    return weights, loss_history
+
+
+def predict_proba(X, weights):
+    # Calculates class probabilities
+    linear_output = np.dot(X, weights)
+    return sigmoid(linear_output)
+
+
+def predict(X, weights, threshold=0.5):
+    # Converts probabilities into binary class labels (0 or 1)
+    probabilities = predict_proba(X, weights)
+    binary_predictions = []
+
+    for p in probabilities:
+        if p >= threshold:
+            binary_predictions.append(1)
+        else:
+            binary_predictions.append(0)
+
+    return np.array(binary_predictions)
+
+
+def evaluate_model(y_true, y_pred):
+    # Computes evaluation metrics
+    tp = 0
+    fp = 0
+    tn = 0
+    fn = 0
+
+    for i in range(len(y_true)):
+        actual = y_true[i]
+        predicted = y_pred[i]
+
+        if actual == 1 and predicted == 1:
+            tp += 1
+
+        elif actual == 0 and predicted == 1:
+            fp += 1
+        
+        elif actual == 0 and predicted == 0:
+            tn += 1
+        
+        elif actual == 1 and predicted == 0:
+            fn += 1
+
+    accuracy = (tp + tn) / len(y_true) if len(y_true) > 0 else 0.0
+    precision = tp / (tp + fp) if (tp + fp) > 0 else 0.0
+    recall = tp / (tp + fn) if (tp + fn) > 0 else 0.0
+    f1_score = (2 * precision * recall) / (precision + recall) if (precision + recall) > 0 else 0.0
+
+    return {
+        "accuracy": accuracy,
+        "precision": precision,
+        "recall": recall,
+        "f1_score": f1_score,
+        "confusion_matrix": [[tn, fp], [fn, tp]]
+    }
