@@ -1,7 +1,8 @@
 import data_loader
 import random
 import math
-
+import evaluate_model
+from knn import KNN
 
 # Supposed duration of the infrastructure projects before exceeding expiry data
 def planned_duration(row):
@@ -96,12 +97,12 @@ def split_dataset(features, status, proj_ids, test_size=0.2):
 def apply_encoding(data_list, cat_columns, frequencies):
     encoded_data = []
     for row in data_list:
-        # Start with base numerical features
+        #start with base numerical features
         encoded_row = [row["budget"], row["infraYear"], row["planned_duration"]]
         
-        # Append the learned frequency score for each categorical column
+        #append the learned frequency score for each categorical column
         for col in cat_columns:
-            # If a test category was never seen during training, default to 0.0 frequency
+            #if a test category was never seen during training, default to 0.0 frequency
             encoded_row.append(frequencies[col].get(row[col], 0.0))
         
         encoded_data.append(encoded_row)
@@ -198,3 +199,27 @@ if __name__ == "__main__":
 
     print("Sample normalized data:")
     print(normalized_train[0] if normalized_train else "No training data")
+
+   #KNN evaluation, uncomment this later, add something like a 1 2 3 to choose which method
+   #you want to run when all methods have been coded
+    """print("\n--- Initializing and Training Standard NumPy KNN ---")
+    knn_model = KNN(k=5)
+    knn_model.fit(normalized_train, status_train)
+    predictions = knn_model.predict(normalized_test)
+    results = evaluate_model(status_test, predictions)
+    cm = results["confusion_matrix"]
+    tn, fp = cm[0][0], cm[0][1]
+    fn, tp = cm[1][0], cm[1][1]
+
+    print("\n" + "=" * 45)
+    print("        NUMPY KNN FULL EVALUATION RESULTS         ")
+    print("=" * 45)
+    print(f"Confusion Matrix:")
+    print(f"  [ TN: {tn:6d}  |  FP: {fp:6d} ]")
+    print(f"  [ FN: {fn:6d}  |  TP: {tp:6d} ]")
+    print("-" * 45)
+    print(f"Accuracy:  {results['accuracy'] * 100:6.2f}%")
+    print(f"Precision: {results['precision'] * 100:6.2f}%")
+    print(f"Recall:    {results['recall'] * 100:6.2f}%")
+    print(f"F1-Score:  {results['f1_score'] * 100:6.2f}%")
+    print("=" * 45)*/"""
