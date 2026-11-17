@@ -3,7 +3,7 @@ import random
 import math
 import evaluate_model
 from knn import KNN
-
+import datetime
 # Supposed duration of the infrastructure projects before exceeding expiry data
 def planned_duration(row):
     return (row["expiryDate"] - row["contractEffectivityDate"]).days
@@ -32,7 +32,13 @@ def build_status(row):
         if is_delayed(row):
             return 1
         return 0
-
+    
+    if "ongoing" in status or "on-going" in status:
+        #if it's past its expiry date,
+        expiry = row.get("expiryDate")
+        if expiry and datetime.now() > expiry:
+            return 1
+        
     return None
 
 
@@ -61,8 +67,6 @@ def build_dataset(rows, max_year=2025):
             continue
 
         status = build_status(row)
-        if status is None:
-            continue
 
         duration = planned_duration(row)
         if duration < 0:
@@ -231,10 +235,10 @@ if __name__ == "__main__":
     
     for col in target_columns:
         print(f"\n" + "=" * 55)
-        print(f"  TOP DELAY-PRONE ENTITIES BY: {col.upper()} (Min Projects > 5)")
+        min_projects = 5
+        analysis_results = feature_delay(rows, col, min_projects)
+        print(f"  TOP DELAY-PRONE ENTITIES BY: {col.upper()} (Min Projects > {min_projects})")
         print("=" * 55)
-        
-        analysis_results = feature_delay(rows, col, min_projects=5)
         
         if not analysis_results:
             print("  No qualifying records found.")
