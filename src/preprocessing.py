@@ -170,7 +170,34 @@ def normalize(num_train, num_test):
 
     return normalized_num_train, normalized_num_test
 
- 
+
+def feature_delay(rows, feature_key, min_projects):
+    #get the delay rate for the historical features, ignore anything wIth less than min
+    stats = {}
+    for row in rows:
+        val = row.get(feature_key)
+        if val is None:
+            continue
+        status = build_status(row)
+        if status is None:
+            continue
+        if val not in stats:#same thing in bow, create key value pair if first encounter, otherwise just add
+            stats[val] = {"total": 0, "delayed": 0}
+        stats[val]["total"] += 1
+        if status == 1:
+            stats[val]["delayed"] += 1
+            
+    #get delay percentage
+    results = []
+    for val, data in stats.items():
+        if data["total"] > min_projects:
+            rate = (data["delayed"] / data["total"]) * 100.0
+            results.append((val, rate, data["total"]))
+        
+    #sort by the highest delay rate
+    results.sort(key=lambda x: x[1], reverse=True)
+    return results
+
 if __name__ == "__main__":
     rows = data_loader.load_csv()
 
@@ -199,6 +226,22 @@ if __name__ == "__main__":
 
     print("Sample normalized data:")
     print(normalized_train[0] if normalized_train else "No training data")
+
+    target_columns = ["region", "province", "category", "contractor"]
+    
+    for col in target_columns:
+        print(f"\n" + "=" * 55)
+        print(f"  TOP DELAY-PRONE ENTITIES BY: {col.upper()} (Min Projects > 5)")
+        print("=" * 55)
+        
+        analysis_results = feature_delay(rows, col, min_projects=5)
+        
+        if not analysis_results:
+            print("  No qualifying records found.")
+        else:
+            for val, rate, count in analysis_results[:15]:
+                print(f"  {val[:40]:<40} | Delay Rate: {rate:6.2f}% | Projects: {count}")
+    print("=" * 55 + "\n")
 
    #KNN evaluation, uncomment this later, add something like a 1 2 3 to choose which method
    #you want to run when all methods have been coded
