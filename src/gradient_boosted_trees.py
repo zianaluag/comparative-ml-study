@@ -81,3 +81,32 @@ def tree_predictions(tree, X):
         updates[i] = node["value"]
 
     return updates
+
+
+def train_model(X_train, y_train, n_trees=30, max_depth=3, learning_rate=0.1, l2_reg=1.0):
+    X = np.asarray(X_train, dtype=float)
+    y = np.asarray(y_train, dtype=float)
+
+    # start with the share of training projects that were delayed
+    rate = np.clip(y.mean(), 1e-6, 1 - 1e-6)
+    base_score = np.log(rate / (1 - rate))
+
+    scores = np.full(len(y), base_score)
+    trees = []
+
+    for _ in range(n_trees):
+        probabilities = sigmoid(scores)
+
+        # the gradient is the gap between the predicted probability and the actual label
+        gradients = probabilities - y
+
+        # the hessian tells us how fast the probability changes as the score changes
+        hessians = probabilities * (1 - probabilities)
+
+        tree = build_tree(X, gradients, hessians, max_depth, l2_reg)
+
+        # add a fraction of this tree's adjustment before training the next tree
+        scores += learning_rate * tree_predictions(tree, X)
+        trees.append(tree)
+
+    return {"base_score": base_score, "learning_rate": learning_rate, "trees": trees}
