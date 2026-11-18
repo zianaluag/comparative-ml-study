@@ -157,5 +157,12 @@ if __name__ == "__main__":
     features, labels, ids = build_dataset(load_csv())
     X_train, X_test, y_train, y_test, _, _ = split_dataset(features, labels, ids)
 
+    # drop unknown labels after the split so the cutoff stays the same
+    X_train, y_train = labeled_rows(X_train, y_train)
+    X_test, y_test = labeled_rows(X_test, y_test)
+
+    if not y_train or not y_test:
+        raise ValueError("Both the training set and the test set need labeled projects.")
+
     cat_columns = ["region", "province", "category", "contractor"]
     X_train, X_test = encode_categoricals(X_train, X_test, cat_columns)
