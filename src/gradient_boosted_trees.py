@@ -110,3 +110,12 @@ def train_model(X_train, y_train, n_trees=30, max_depth=3, learning_rate=0.1, l2
         trees.append(tree)
 
     return {"base_score": base_score, "learning_rate": learning_rate, "trees": trees}
+
+
+def predict_proba(X, model):
+    scores = np.full(len(X), model["base_score"])
+
+    for tree in model["trees"]:
+        scores += model["learning_rate"] * tree_predictions(tree, X)
+
+    return sigmoid(scores)
