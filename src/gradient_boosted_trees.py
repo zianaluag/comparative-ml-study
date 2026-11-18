@@ -51,8 +51,8 @@ def build_tree(X, gradients, hessians, depth, l2_reg):
     return {
         "feature": best_feature,
         "threshold": best_threshold,
-        "left": build_tree(X[left], gradients[left], hessians[left], 0, l2_reg),
-        "right": build_tree(X[right], gradients[right], hessians[right], 0, l2_reg),
+        "left": build_tree(X[left], gradients[left], hessians[left], depth - 1, l2_reg),
+        "right": build_tree(X[right], gradients[right], hessians[right], depth - 1, l2_reg),
     }
 
 
