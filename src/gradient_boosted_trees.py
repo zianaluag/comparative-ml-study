@@ -122,3 +122,7 @@ def predict_proba(X, model):
         scores += model["learning_rate"] * tree_predictions(tree, X)
 
     return sigmoid(scores)
+
+
+def predict(X, model, threshold=0.5):
+    return (predict_proba(X, model) >= threshold).astype(int)
