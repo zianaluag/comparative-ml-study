@@ -135,3 +135,15 @@ def predict_proba(X, model):
 
 def predict(X, model, threshold=0.5):
     return (predict_proba(X, model) >= threshold).astype(int)
+
+
+def labeled_rows(features, labels):
+    rows = []
+    targets = []
+
+    for row, label in zip(features, labels):
+        if label is not None:
+            rows.append(row)
+            targets.append(label)
+
+    return rows, targets
