@@ -93,6 +93,12 @@ def train_model(X_train, y_train, n_trees=30, max_depth=3, learning_rate=0.1, l2
     if not np.all((y == 0) | (y == 1)):
         raise ValueError("Delay labels must be 0 or 1.")
 
+    if n_trees < 0 or max_depth < 0:
+        raise ValueError("Tree count and depth must be nonnegative.")
+
+    if learning_rate <= 0 or l2_reg <= 0:
+        raise ValueError("Learning rate and L2 regularization must be positive.")
+
     # start with the share of training projects that were delayed
     rate = np.clip(y.mean(), 1e-6, 1 - 1e-6)
     base_score = np.log(rate / (1 - rate))
