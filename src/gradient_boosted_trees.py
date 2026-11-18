@@ -87,6 +87,9 @@ def train_model(X_train, y_train, n_trees=30, max_depth=3, learning_rate=0.1, l2
     X = np.asarray(X_train, dtype=float)
     y = np.asarray(y_train, dtype=float)
 
+    if X.ndim != 2 or len(X) == 0 or y.shape != (len(X),):
+        raise ValueError("Provide one label per row in a nonempty training set.")
+
     # start with the share of training projects that were delayed
     rate = np.clip(y.mean(), 1e-6, 1 - 1e-6)
     base_score = np.log(rate / (1 - rate))
