@@ -166,3 +166,9 @@ if __name__ == "__main__":
 
     cat_columns = ["region", "province", "category", "contractor"]
     X_train, X_test = encode_categoricals(X_train, X_test, cat_columns)
+    X_train, X_test = normalize(X_train, X_test)
+
+    model = train_model(X_train, y_train)
+    predictions = predict(X_test, model)
+
+    results = evaluate_model(y_test, predictions)
