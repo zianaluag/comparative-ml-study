@@ -54,3 +54,21 @@ def build_tree(X, gradients, hessians, depth, l2_reg):
         "left": build_tree(X[left], gradients[left], hessians[left], 0, l2_reg),
         "right": build_tree(X[right], gradients[right], hessians[right], 0, l2_reg),
     }
+
+
+def tree_predictions(tree, X):
+    updates = np.empty(len(X))
+
+    for i, row in enumerate(X):
+        node = tree
+
+        # follow the branches until the project reaches a leaf
+        while "value" not in node:
+            if row[node["feature"]] <= node["threshold"]:
+                node = node["left"]
+            else:
+                node = node["right"]
+
+        updates[i] = node["value"]
+
+    return updates
