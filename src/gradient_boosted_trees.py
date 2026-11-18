@@ -23,23 +23,32 @@ def build_tree(X, gradients, hessians, depth, l2_reg):
     best_threshold = None
 
     for col in range(X.shape[1]):
-        values = np.unique(X[:, col])
+        order = np.argsort(X[:, col], kind="stable")
+        values = X[order, col]
 
-        for threshold in values[:-1]:
-            left = X[:, col] <= threshold
-            left_grad = gradients[left].sum()
-            left_hess = hessians[left].sum()
-            right_grad = total_grad - left_grad
-            right_hess = total_hess - left_hess
+        # only try a split between two different values
+        cuts = np.flatnonzero(values[:-1] < values[1:])
 
-            left_score = node_score(left_grad, left_hess, l2_reg)
-            right_score = node_score(right_grad, right_hess, l2_reg)
-            gain = (left_score + right_score - parent_score) / 2
+        if len(cuts) == 0:
+            continue
 
-            if gain > best_gain:
-                best_gain = gain
-                best_feature = col
-                best_threshold = threshold
+        # running totals let us check each split without adding the same rows again
+        left_grad = np.cumsum(gradients[order])[cuts]
+        left_hess = np.cumsum(hessians[order])[cuts]
+
+        right_grad = total_grad - left_grad
+        right_hess = total_hess - left_hess
+
+        left_score = node_score(left_grad, left_hess, l2_reg)
+        right_score = node_score(right_grad, right_hess, l2_reg)
+
+        gains = (left_score + right_score - parent_score) / 2
+        best = np.argmax(gains)
+
+        if gains[best] > best_gain:
+            best_gain = gains[best]
+            best_feature = col
+            best_threshold = values[cuts[best]]
 
     # keep the leaf if no split improves its score
     if best_feature is None:
