@@ -172,3 +172,10 @@ if __name__ == "__main__":
     predictions = predict(X_test, model)
 
     results = evaluate_model(y_test, predictions)
+
+    print(f"Training projects: {len(y_train)}")
+    print(f"Test projects: {len(y_test)}")
+    print("Confusion matrix [[TN, FP], [FN, TP]]:", results["confusion_matrix"])
+
+    for metric in ("accuracy", "precision", "recall", "f1_score"):
+        print(f"{metric}: {results[metric]:.4f}")
