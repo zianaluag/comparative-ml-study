@@ -147,3 +147,15 @@ def labeled_rows(features, labels):
             targets.append(label)
 
     return rows, targets
+
+
+if __name__ == "__main__":
+    from data_loader import load_csv
+    from evaluate_model import evaluate_model
+    from preprocessing import build_dataset, split_dataset, encode_categoricals, normalize
+
+    features, labels, ids = build_dataset(load_csv())
+    X_train, X_test, y_train, y_test, _, _ = split_dataset(features, labels, ids)
+
+    cat_columns = ["region", "province", "category", "contractor"]
+    X_train, X_test = encode_categoricals(X_train, X_test, cat_columns)
