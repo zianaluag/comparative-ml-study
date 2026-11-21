@@ -140,31 +140,41 @@ def apply_encoding(data_list, cat_columns, rates, global_rate):
 
 def encode_categoricals(train_features, test_features, cat_columns, status_train, m=10, n_folds=5):
     encoded_train = [None] * len(train_features)
-    #learn frequencies from just the training data/in order to not get clairvoyance from the test data
 
+    # Learn frequencies using training data
     for fold in range(n_folds):
         fit_features = []
         fit_statuses = []
         held_idx = []
 
+        # Separate the training data into 5 folds
         for i in range(len(train_features)):
             if i%n_folds == fold:
                 held_idx.append(i)
             else:
+                # Learning folds
                 fit_features.append(train_features[i])
                 fit_statuses.append(status_train[i])
 
+        # Get category rates from other groups
         rates, global_rate = learn_rates(fit_features, fit_statuses, cat_columns, m)
+
+        # Encode the held-out fold
         held_rows = [train_features[i] for i in held_idx]
         encoded_held = apply_encoding(held_rows, cat_columns, rates, global_rate)
 
+        # Restore encoded rows to original positions
         for i, enc_row in zip(held_idx, encoded_held):
             encoded_train[i] = enc_row
 
+    # Get category rates using all training data
     rates, global_rate = learn_rates(train_features, status_train, cat_columns, m)
+
+    # Encode test data
     encoded_test = apply_encoding(test_features, cat_columns, rates, global_rate)
 
     return encoded_train, encoded_test
+
     # for row in train_features:
     #     for col in cat_columns:
     #         val = row[col]
