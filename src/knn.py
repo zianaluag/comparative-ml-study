@@ -18,14 +18,15 @@ class KNN:
         Fit the model using X as training data and y as target values.
         Since KNN is a lazy learner, it just stores the data.
         """
-        self.X_train = X
-        self.y_train = y
+        self.X_train = np.asarray(X)
+        self.y_train = np.asarray(y)
 
     def predict(self, X):
         """
         Predict the class labels for the provided data.
         """
         # Store predictions for all samples in X
+        X = np.asarray(X)
         predictions = [self._predict_single(x) for x in X]
         return np.array(predictions)
 
@@ -34,10 +35,10 @@ class KNN:
         Predict the class label for a single sample.
         """
         # 1. Calculate Euclidean distances between x and all training samples
-        distances = np.sqrt(np.sum((self.X_train - x)**2, axis=1))
+        distances = np.sum((self.X_train - x)**2, axis=1)
         
         # 2. Get the indices of the k nearest neighbors
-        k_indices = np.argsort(distances)[:self.k]
+        k_indices = np.argpartition(distances, self.k)[:self.k]
         
         # 3. Extract the labels of the k nearest neighbors
         k_nearest_labels = self.y_train[k_indices]
