@@ -1,5 +1,7 @@
 # CMSC 170 Project, Milestone 1: Proposal and Setup
 
+This proposal records the original plan, including HNSW for KNN and an early delay definition. See the [main README](../README.md) for the current brute-force KNN implementation and the delay rules used in the comparison.
+
 **Group Name:** Fantastic 4 vs. VON Doom
 
 **Group Members:**

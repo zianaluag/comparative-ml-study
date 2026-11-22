@@ -18,6 +18,11 @@ class KNN:
         Fit the model using X as training data and y as target values.
         Since KNN is a lazy learner, it just stores the data.
         """
+        if not isinstance(self.k, (int, np.integer)) or not 1 <= self.k <= len(X):
+            raise ValueError("k must be an integer between 1 and the number of training rows.")
+        if len(X) != len(y):
+            raise ValueError("Provide one label per training row.")
+
         self.X_train = np.asarray(X)
         self.y_train = np.asarray(y)
 
@@ -38,7 +43,9 @@ class KNN:
         distances = np.sum((self.X_train - x)**2, axis=1)
         
         # 2. Get the indices of the k nearest neighbors
-        k_indices = np.argpartition(distances, self.k)[:self.k]
+        # When k includes every row, use the last valid partition index
+        partition_index = min(self.k, len(distances) - 1)
+        k_indices = np.argpartition(distances, partition_index)[:self.k]
         
         # 3. Extract the labels of the k nearest neighbors
         k_nearest_labels = self.y_train[k_indices]

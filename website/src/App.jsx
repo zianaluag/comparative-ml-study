@@ -8,6 +8,67 @@ import frannieAvatar from "./assets/frannie.png";
 import desmondAvatar from "./assets/desmond.png";
 import categoryChart from "./assets/category-chart.png";
 
+const modelResults = [
+  {
+    name: "Spline Logistic Regression",
+    color: "text-orange",
+    setting: "Delay threshold 0.20",
+    tp: 15949, fn: 5933, fp: 9397, tn: 11405,
+  },
+  {
+    name: "Gradient Boosted Trees",
+    color: "text-teal",
+    setting: "Delay threshold 0.25",
+    tp: 16040, fn: 5842, fp: 8043, tn: 12759,
+  },
+  {
+    name: "k-Nearest Neighbors",
+    color: "text-pink",
+    setting: "5 neighbors",
+    tp: 7335, fn: 14547, fp: 2548, tn: 18254,
+  },
+];
+
+function ModelResult({ name, color, setting, tp, fn, fp, tn }) {
+  const total = tp + fn + fp + tn;
+  const cells = [
+    ["TP", tp, "cell-navy"],
+    ["FN", fn, "cell-steel"],
+    ["FP", fp, "cell-mid"],
+    ["TN", tn, "cell-royal"],
+  ];
+  const metrics = [
+    ["Accuracy", (100 * (tp + tn) / total).toFixed(2) + "%", "text-cream"],
+    ["Recall", (100 * tp / (tp + fn)).toFixed(2) + "%", "text-teal"],
+    ["Precision", (100 * tp / (tp + fp)).toFixed(2) + "%", "text-orange"],
+    ["F1", (2 * tp / (2 * tp + fp + fn)).toFixed(4), "text-pink"],
+  ];
+
+  return (
+    <div className="card heatmap-panel">
+      <h3 className={"heatmap-title " + color}>{name}</h3>
+      <div className="cm-grid">
+        {cells.map(([label, count, shade]) => (
+          <div className={"cm-cell " + shade} key={label}>
+            <span className="cm-label">{label}</span>
+            <span className="cm-value">{count.toLocaleString("en-US")}</span>
+            <span className="cm-pct">{Math.round(100 * count / total)}%</span>
+          </div>
+        ))}
+      </div>
+      <span className={"heatmap-subtitle " + color}>{setting}</span>
+      <div className="metrics-strip">
+        {metrics.map(([label, value, shade]) => (
+          <div className="metric-pill" key={label}>
+            <span className="metric-name">{label}</span>
+            <span className={"metric-val " + shade}>{value}</span>
+          </div>
+        ))}
+      </div>
+    </div>
+  );
+}
+
 function App() {
   // Automatically resize the Datawrapper iframe height
   useEffect(() => {
@@ -64,19 +125,15 @@ function App() {
             Public infrastructure delays drive up costs and delay essential
             community benefits. Analyzing DPWH contract records from the
             BetterGov Open Data Portal and bidding and expiry data from the DPWH
-            Transparency Portal, this project predicts whether infrastructure
-            projects will finish past their contract expiry dates and uncovers
-            which contract characteristics are most strongly linked to delays.
-            Using custom, from-scratch implementations, we benchmark three
-            fundamentally different machine learning methods—
+            Transparency Portal, we compare how well three models flag
+            infrastructure projects at risk of delay. We implemented and tested{" "}
             <span className="text-orange">Spline Logistic Regression</span>,{" "}
             <span className="text-teal">
               XGBoost-style Gradient Boosted Trees
             </span>
             , and{" "}
-            <span className="text-pink">k-Nearest Neighbors</span>—to
-            determine which approach most effectively ranks contracts by delay
-            risk.
+            <span className="text-pink">k-Nearest Neighbors</span> on the same
+            test projects.
           </p>
         </section>
 
@@ -85,21 +142,11 @@ function App() {
           <h2 className="section-heading text-orange">Abstract</h2>
           <div className="card abstract-card">
             <p>
-              Delays in public infrastructure projects inflate costs and
-              postpone critical benefits for the communities they serve. To
-              support proactive oversight, this study investigates the factors
-              driving schedule overruns in Department of Public Works and
-              Highways (DPWH) infrastructure contracts and evaluates which
-              machine learning paradigm best predicts project delays. Using
-              contract records from the BetterGov Open Data Portal—encompassing
-              approximately 248,000 contracts with details on budget, project
-              type, location, contractor, status, and actual execution
-              dates—supplemented by contract expiry dates and bidding details
-              collected from the DPWH Transparency Portal, we classify a project
-              as delayed when its actual completion date exceeds its contract
-              expiry date. Built using custom data loading and preprocessing
-              pipelines written from scratch, our comparative study benchmarks
-              three distinct modeling approaches:
+              We study Department of Public Works and Highways (DPWH) contracts
+              to see which projects could benefit from closer monitoring. We
+              compare historical delay rates across project groups and use a
+              shared test set to measure how often each model catches delays
+              and flags projects that finish within the allowance.
             </p>
           </div>
         </section>
@@ -128,51 +175,66 @@ function App() {
                 <p>
                   Our dataset integrates public infrastructure contract records
                   from the{" "}
-                  <span className="text-teal">BetterGov Open Data Portal</span>{" "}
+                  <a className="text-teal" href="https://data.bettergov.ph/datasets/19/resources/406">
+                    BetterGov Open Data Portal
+                  </a>{" "}
                   and project-level schedule and bidding records from the{" "}
-                  <span className="text-teal">DPWH Transparency Portal</span>,
+                  <a className="text-teal" href="https://transparency.dpwh.gov.ph/">
+                    DPWH Transparency Portal
+                  </a>,
                   spanning <span className="text-orange">215,277 contracts</span>{" "}
-                  across <span className="text-orange">19 regions</span> and{" "}
+                  across <span className="text-orange">19 regions</span> with{" "}
                   <span className="text-orange">
-                    220 District Engineering Offices
+                    220 location labels
                   </span>{" "}
-                  (2016–2026).
+                  in the province field (2016-2026).
                 </p>
 
                 <p>
-                  Each entry captures pre-execution contract attributes—including
-                  approved budget (median{" "}
-                  <span className="text-teal">₱9.85M</span>), infrastructure
-                  category (roads, buildings, flood control, bridges, and water
-                  systems), contractor, funding source, geographic coordinates,
-                  and contract effectivity, expiry, and actual completion dates.
+                  We train on budget, infrastructure year, planned duration,
+                  latitude, longitude, region, province, category, component
+                  category, and contractor. The median budget in the source
+                  records is <span className="text-teal">₱9.85M</span>.
                 </p>
 
                 <p>
-                  Evaluating{" "}
+                  Among{" "}
                   <span className="text-pink">
                     188,401 completed contracts
                   </span>{" "}
-                  with verified timelines,{" "}
+                  with both dates recorded,{" "}
                   <span className="text-pink">24.16% (45,514 projects)</span>{" "}
-                  finished past their contract expiry dates, with regional delay
-                  rates varying sharply across the archipelago.
+                  finished past their recorded expiry dates. This describes the
+                  raw records.
+                </p>
+
+                <p>
+                  For the model comparison, we kept 213,418 labeled projects
+                  through 2025. A completed project is labeled delayed if it
+                  finishes past expiry by more than 5% of its planned duration
+                  or reports less than 100% progress. Terminated projects and
+                  ongoing projects past expiry also count as delayed.
                 </p>
               </div>
 
-              <div className="card dataset-chart-card">
+              <figure className="card dataset-chart-card">
                 <img
                   src={categoryChart}
-                  alt="Overall percentage of Delayed Projects by Category"
+                  alt="Percentage of projects labeled delayed by component category"
                   className="category-chart-img"
                 />
-              </div>
+                <figcaption>
+                  Delay rates for selected component categories in the labeled
+                  projects through 2025.
+                </figcaption>
+              </figure>
             </div>
           </div>
         </section>
 
         {/* Section 4: Three Approaches */}
         <section id="models" className="section models-section">
+          <h2 className="section-heading text-orange">Models</h2>
           <div className="models-grid">
             <div className="model-column">
               <h3 className="model-title text-orange">
@@ -180,10 +242,11 @@ function App() {
               </h3>
               <div className="card model-card">
                 <p>
-                  Predicts yes/no outcomes as calibrated risk probabilities,
-                  using splines to model smooth, curved feature effects instead
-                  of rigid straight lines. Easy to explain and audit, serving as
-                  our benchmark.
+                  Estimates delay probabilities using quadratic splines. The
+                  splines let numerical features have curved effects, such as
+                  planned duration having a different effect for short and long
+                  contracts. We use two knots per feature and train for 200
+                  epochs with a learning rate of 0.1 and L2 regularization of 0.01.
                 </p>
               </div>
             </div>
@@ -194,9 +257,9 @@ function App() {
               </h3>
               <div className="card model-card">
                 <p>
-                  Implemented from scratch to sequentially correct errors across
-                  an ensemble of decision trees, targeting high accuracy on
-                  mixed tabular features.
+                  Each tree adjusts the earlier trees' predictions. We use 90
+                  trees with a maximum depth of 5, a learning rate of 0.1, and
+                  L2 regularization of 1.0.
                 </p>
               </div>
             </div>
@@ -208,9 +271,8 @@ function App() {
               <div className="card model-card">
                 <p>
                   Evaluates new contracts by retrieving the most similar
-                  historical projects rather than learning global rules,
-                  relying on feature distance across past records to estimate
-                  delay risk.
+                  historical projects using Euclidean distance. The five closest
+                  training projects vote on the delay label.
                 </p>
               </div>
             </div>
@@ -218,182 +280,52 @@ function App() {
 
           <div className="card summary-card">
             <p>
-              By comparing these three paradigms, this work aims to identify the
-              contract characteristics most strongly linked to delays and
-              establish an effective framework for flagging high-risk public
-              works projects for closer monitoring.
+            The training set provided the category delay rates for all three
+            models. The spline model and KNN also scale their inputs using
+            training statistics.
             </p>
           </div>
         </section>
 
-        {/* Section 5: Model Results & Discussion (Spline Logistic Regression vs. KNN) */}
+        {/* Section 5: Results and Discussion */}
         <section id="results" className="section results-section">
           <h2 className="section-heading text-orange">
             Preliminary Results &amp; Discussion
           </h2>
 
-          <div className="heatmaps-row">
-            {/* Heatmap 1: Spline Logistic Regression */}
-            <div className="card heatmap-panel">
-              <h3 className="heatmap-title text-orange">
-                Spline Logistic Regression
-              </h3>
-
-              <div className="cm-grid">
-                <div className="cm-row">
-                  <div className="cm-cell cell-navy">
-                    <span className="cm-label">TP</span>
-                    <span className="cm-value">15,949</span>
-                    <span className="cm-pct">37%</span>
-                  </div>
-                  <div className="cm-cell cell-steel">
-                    <span className="cm-label">FN</span>
-                    <span className="cm-value">5,933</span>
-                    <span className="cm-pct">14%</span>
-                  </div>
-                </div>
-                <div className="cm-row">
-                  <div className="cm-cell cell-mid">
-                    <span className="cm-label">FP</span>
-                    <span className="cm-value">9,397</span>
-                    <span className="cm-pct">22%</span>
-                  </div>
-                  <div className="cm-cell cell-royal">
-                    <span className="cm-label">TN</span>
-                    <span className="cm-value">11,405</span>
-                    <span className="cm-pct">27%</span>
-                  </div>
-                </div>
-              </div>
-
-              <span className="heatmap-subtitle text-orange">
-                Decision Threshold at 0.2
-              </span>
-
-              <div className="metrics-strip">
-                <div className="metric-pill">
-                  <span className="metric-name">Accuracy</span>
-                  <span className="metric-val text-cream">64.08%</span>
-                </div>
-                <div className="metric-pill">
-                  <span className="metric-name">Recall</span>
-                  <span className="metric-val text-teal">72.89%</span>
-                </div>
-                <div className="metric-pill">
-                  <span className="metric-name">Precision</span>
-                  <span className="metric-val text-orange">62.93%</span>
-                </div>
-                <div className="metric-pill">
-                  <span className="metric-name">F1-Score</span>
-                  <span className="metric-val text-pink">0.68</span>
-                </div>
-              </div>
-            </div>
-
-            {/* Heatmap 2: KNN */}
-            <div className="card heatmap-panel">
-              <h3 className="heatmap-title text-pink">
-                KNN Heatmap
-              </h3>
-
-              <div className="cm-grid">
-                <div className="cm-row">
-                  <div className="cm-cell cell-mid">
-                    <span className="cm-label">TP</span>
-                    <span className="cm-value">7,335</span>
-                    <span className="cm-pct">17%</span>
-                  </div>
-                  <div className="cm-cell cell-royal">
-                    <span className="cm-label">FN</span>
-                    <span className="cm-value">14,547</span>
-                    <span className="cm-pct">34%</span>
-                  </div>
-                </div>
-                <div className="cm-row">
-                  <div className="cm-cell cell-light">
-                    <span className="cm-label">FP</span>
-                    <span className="cm-value">2,548</span>
-                    <span className="cm-pct">6%</span>
-                  </div>
-                  <div className="cm-cell cell-navy">
-                    <span className="cm-label">TN</span>
-                    <span className="cm-value">18,254</span>
-                    <span className="cm-pct">43%</span>
-                  </div>
-                </div>
-              </div>
-
-              <span className="heatmap-subtitle text-pink">
-                Distance-Based Neighbor Classification
-              </span>
-
-              <div className="metrics-strip">
-                <div className="metric-pill">
-                  <span className="metric-name">Accuracy</span>
-                  <span className="metric-val text-cream">59.95%</span>
-                </div>
-                <div className="metric-pill">
-                  <span className="metric-name">Recall</span>
-                  <span className="metric-val text-pink">33.52%</span>
-                </div>
-                <div className="metric-pill">
-                  <span className="metric-name">Precision</span>
-                  <span className="metric-val text-teal">74.22%</span>
-                </div>
-                <div className="metric-pill">
-                  <span className="metric-name">F1-Score</span>
-                  <span className="metric-val text-orange">0.46</span>
-                </div>
-              </div>
-            </div>
+          <div className="card results-setup">
+            <p>
+              We sorted the projects by infrastructure year and trained on the
+              first 80% (170,734 projects). The last 20% (42,684 projects) formed
+              the test set. Both sets contain projects from 2024.
+            </p>
+            <p>
+              Each percentage in the confusion matrices is a share of the full
+              test set. Precision measures how often a delay flag is correct.
+              Recall measures how many actual delays we catch, and F1 combines
+              precision and recall.
+            </p>
           </div>
 
-          {/* Comparative Analysis & Discussion */}
+          <div className="heatmaps-row">
+            {modelResults.map((result) => (
+              <ModelResult key={result.name} {...result} />
+            ))}
+          </div>
+
           <div className="card discussion-card">
             <h3 className="discussion-heading text-teal">
               Comparative Analysis &amp; Oversight Implications
             </h3>
-
-                  
-            {/* <p> WILL UPDATE TOMO
-              Evaluated across the same test split of{" "}
-              <span className="text-orange">42,684 contracts</span> (21,882
-              delayed and 20,802 on-time),{" "}
-              <span className="text-orange">Spline Logistic Regression</span>{" "}
-              and <span className="text-pink">k-Nearest Neighbors (KNN)</span>{" "}
-              demonstrate sharply contrasting classification behaviors and error
-              trade-offs.
-            </p>
-
             <p>
-              <span className="text-pink">KNN</span> operates conservatively,
-              assigning a delay label only when a contract&apos;s nearest
-              historical neighbors are predominantly delayed. While this yields
-              strong <span className="text-teal">precision (74.22%)</span> and{" "}
-              <span className="text-teal">specificity (87.75%)</span> with a
-              low false-alarm rate (6% of total predictions), it misses
-              two-thirds of truly delayed projects—resulting in{" "}
-              <span className="text-pink">14,547 false negatives (34%)</span>,{" "}
-              <span className="text-pink">33.52% recall</span>, and an overall{" "}
-              <span className="text-orange">F1-score of 0.46</span>.
+              Gradient boosted trees had the highest F1 on this split and
+              caught 16,040 of the 21,882 delayed projects. At a threshold of
+              0.20, spline logistic regression caught 15,949.
             </p>
-
             <p>
-              By contrast, lowering the decision threshold to{" "}
-              <span className="text-orange">0.2</span> shifts{" "}
-              <span className="text-orange">Spline Logistic Regression</span>{" "}
-              toward proactive risk detection. It captures{" "}
-              <span className="text-teal">72.89% of all delayed contracts</span>{" "}
-              (15,949 true positives), cutting false negatives by more than half
-              (down to 5,933) and boosting both{" "}
-              <span className="text-teal">accuracy (64.08%)</span> and{" "}
-              <span className="text-teal">F1-score (0.68)</span>. Although the
-              lower threshold increases false positives to 22% (62.93%
-              precision), prioritizing high recall is substantially better
-              aligned with public infrastructure oversight, where missing an
-              at-risk contract carries far greater financial and community cost
-              than auditing an on-time project.
-            </p> */}
+              KNN had the highest precision. It flagged 2,548 projects that
+              finished within the allowance and missed 14,547 actual delays.
+            </p>
           </div>
         </section>
 
@@ -425,11 +357,11 @@ function App() {
             <div className="team-member">
               <img
                 src={frannieAvatar}
-                alt="Tandang, Frannieczeska U."
+                alt="Tandang, Frannieczeska Erene U."
                 className="avatar"
               />
               <span className="member-name text-cream">
-                Tandang, Frannieczeska U.
+                Tandang, Frannieczeska Erene U.
               </span>
             </div>
 
@@ -457,6 +389,11 @@ function App() {
                 CMSC 170: Introduction to Artificial Intelligence
               </span>{" "}
               course.
+            </p>
+            <p>
+              <a className="text-teal" href="https://github.com/zianaluag/comparative-ml-study">
+                Project repository
+              </a>
             </p>
           </div>
         </section>

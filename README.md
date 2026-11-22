@@ -17,7 +17,7 @@ We look at how often projects ran late across regions, provinces, project catego
 
 We use `datasets/dpwh_data.csv`. The project records come from the [BetterGov Open Data Portal](https://data.bettergov.ph/datasets/19/resources/406). The contract dates come from the [DPWH Transparency Portal](https://transparency.dpwh.gov.ph/).
 
-The loader skips duplicate contract IDs and rows with invalid or missing required values. Before splitting the data, we keep projects through infrastructure year 2025 that have a label and a nonnegative planned duration. This gives us 213,418 projects for the comparison. We sort them by infrastructure year and use the first 80% for training (170,734 projects) and the last 20% for testing (42,684 projects).
+The loader skips duplicate contract IDs and rows with invalid or missing required values. Before splitting the data, we keep projects through infrastructure year 2025 that have a label and a nonnegative planned duration. This gives us 213,418 projects for the comparison. We sort them by infrastructure year and use the first 80% for training (170,734 projects) and the last 20% for testing (42,684 projects). Projects within each year keep their CSV order. Both sets contain 2024 projects.
 
 All three methods start with the same 10 inputs. The numerical features are budget, infrastructure year, planned duration, latitude, and longitude. The categorical features are region, province, category, component category, and contractor.
 
@@ -35,12 +35,14 @@ We represent each category with a delay rate pulled toward the overall training 
 
 For example, take a 100-day contract marked 100% complete. Finishing five days past expiry gives it `0`. Finishing six days past expiry gives it `1`.
 
+Rerunning the comparison after an ongoing project passes its expiry date can change its label and the split counts.
+
 ## Methods so far
 
 We implemented all three methods from scratch in Python using NumPy.
 
 - **Spline logistic regression** (`src/spline_logreg.py`) uses quadratic splines for all five numerical features. This lets an extra month on a short contract affect the estimated risk differently from an extra month on a long one. We fit two knots per feature on the training data and scale the expanded features using training statistics. We train for 200 epochs with a learning rate of 0.1 and L2 regularization of 0.01.
-- **XGBoost-style gradient boosted trees** (`src/gradient_boosted_trees.py`) builds a series of small decision trees. Each tree adjusts the scores from the earlier trees. For the current run, we use 90 trees with a maximum depth of 5, a learning rate of 0.1, L2 regularization of 1.0, and a delay threshold of 0.25. We chose the tree count, depth, and threshold by F1 on the newest 20% of the training set, then refit on all the training projects.
+- **XGBoost-style gradient boosted trees** (`src/gradient_boosted_trees.py`) builds a series of small decision trees. Each tree adjusts the scores from the earlier trees. For the current run, we use 90 trees with a maximum depth of 5, a learning rate of 0.1, L2 regularization of 1.0, and a delay threshold of 0.25. We chose the tree count, depth, and threshold by F1 on the last 20% of the year-sorted training set, then refit on all the training projects.
 - **k-nearest neighbors** (`src/knn.py`) uses features scaled with training statistics. It checks the Euclidean distance to every training project and predicts the most common label among the five closest projects.
 
 ## Results so far
@@ -55,14 +57,14 @@ All three methods report accuracy, precision, recall, F1, and a confusion matrix
 
 On this split, gradient boosted trees had the highest F1 and caught 16,040 of the 21,882 delayed projects. KNN had the highest precision and flagged 2,548 projects that were within the allowance. The spline row uses the 0.20 threshold shown on the project page.
 
-The [project page source](website/) includes the dataset overview, a regional delay map, a category delay chart, and preliminary results for spline logistic regression and KNN.
+The [project page source](website/) includes the dataset overview, a regional delay map, a delay chart by component category, and preliminary results for all three models.
 
 ## Running the code
 
-From the repo root, install NumPy and run the model menu.
+From the repo root, install the NumPy version used for the comparison and run the model menu.
 
 ```bash
-python -m pip install numpy
+python -m pip install numpy==2.3.5
 python src/run_experiments.py
 ```
 

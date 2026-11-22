@@ -90,14 +90,14 @@ def build_dataset(rows, max_year=2025):
     return features, statuses, proj_ids
 
 
-#split the data set to train and test data using an 80/20, split, from less to more recent
+# split 80/20 by infrastructure year, keeping CSV order within each year
 def split_dataset(features, status, proj_ids, test_size=0.2):
     combined = list(zip(features, status, proj_ids))
     combined.sort(key=lambda x: x[0]["infraYear"])
 
     train_size = int(len(combined) * (1 - test_size))
-    train_data = combined[:train_size]#aka the past data
-    test_data = combined[train_size:]#aka the future data
+    train_data = combined[:train_size]
+    test_data = combined[train_size:]
 
     feat_train = [data[0] for data in train_data]
     status_train = [data[1] for data in train_data]
@@ -135,9 +135,8 @@ def apply_encoding(data_list, cat_columns, rates, global_rate):
         #start with base numerical features
         encoded_row = [row["budget"], row["infraYear"], row["planned_duration"], row["latitude"], row["longitude"]]
         
-        #append the learned frequency score for each categorical column
+        # use the training delay rate as the fallback for unseen categories
         for col in cat_columns:
-            #if a test category was never seen during training, default to 0.0 frequency
             encoded_row.append(rates[col].get(row[col], global_rate))
         
         encoded_data.append(encoded_row)
@@ -145,15 +144,20 @@ def apply_encoding(data_list, cat_columns, rates, global_rate):
     return encoded_data
 
 def encode_categoricals(train_features, test_features, cat_columns, status_train, m=10, n_folds=5):
+    if len(train_features) < 2 or n_folds < 2:
+        raise ValueError("Target encoding needs at least two training projects and two folds.")
+    if len(train_features) != len(status_train):
+        raise ValueError("Provide one label per training project.")
+
     encoded_train = [None] * len(train_features)
 
-    # Learn frequencies using training data
+    # learn delay rates from the other folds
     for fold in range(n_folds):
         fit_features = []
         fit_statuses = []
         held_idx = []
 
-        # Separate the training data into 5 folds
+        # hold out the current fold
         for i in range(len(train_features)):
             if i%n_folds == fold:
                 held_idx.append(i)
@@ -181,18 +185,6 @@ def encode_categoricals(train_features, test_features, cat_columns, status_train
 
     return encoded_train, encoded_test
 
-    # for row in train_features:
-    #     for col in cat_columns:
-    #         val = row[col]
-    #         frequencies[col][val] = frequencies[col].get(val, 0) + 1
-            
-    # train_size = len(train_features)
-    # for col in cat_columns:#gives us the frequencies of the categories
-    #     for val in frequencies[col]:
-    #         frequencies[col][val] /= train_size
-    # encoded_train = apply_encoding(train_features, cat_columns, frequencies)
-    # encoded_test = apply_encoding(test_features, cat_columns, frequencies)
-    # return encoded_train, encoded_test
 
 # apply normalization to the numerical statistics
 def normalizer(num_stats, means, std_devs):
@@ -245,6 +237,8 @@ def feature_delay(rows, feature_key, min_projects, max_year=2025):
     stats = {}
     for row in rows:
         if row.get("infraYear") is None or row["infraYear"] > max_year:
+            continue
+        if planned_duration(row) < 0:
             continue
         val = row.get(feature_key)
         if val is None:

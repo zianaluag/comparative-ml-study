@@ -182,8 +182,8 @@ if __name__ == "__main__":
     features, labels, ids = build_dataset(load_csv())
     train_rows, test_rows, y_train, y_test, _, _ = split_dataset(features, labels, ids)
 
-    if not y_train or not y_test:
-        raise ValueError("Both the training set and the test set need labeled projects.")
+    if len(y_train) < 2 or not y_test:
+        raise SystemExit("Need at least two labeled training projects and one test project.")
 
     # trees split on feature order, so the encoded features can be used as-is
     X_train, X_test = encode_categoricals(train_rows, test_rows, CATEGORICAL_COLUMNS, y_train)

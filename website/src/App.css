@@ -208,8 +208,10 @@ p {
 .dataset-chart-card {
   padding: 1.5rem;
   display: flex;
+  flex-direction: column;
   justify-content: center;
   align-items: center;
+  gap: 0.75rem;
 }
 
 .category-chart-img {
@@ -252,15 +254,23 @@ p {
   font-size: 1.12rem;
 }
 
-/* Section 5: Results & Discussion (Flexbox) */
+/* Section 5: Results & Discussion */
+.results-setup {
+  margin-bottom: 2.25rem;
+}
+
+.results-setup p + p {
+  margin-top: 0.75rem;
+}
+
 .heatmaps-row {
-  display: flex;
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
   gap: 2.25rem;
   margin-bottom: 2.25rem;
 }
 
 .heatmap-panel {
-  flex: 1;
   display: flex;
   flex-direction: column;
   align-items: center;
@@ -274,21 +284,15 @@ p {
 }
 
 .cm-grid {
-  display: flex;
-  flex-direction: column;
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
   width: 100%;
   max-width: 340px;
   border-radius: 10px;
   overflow: hidden;
 }
 
-.cm-row {
-  display: flex;
-  width: 100%;
-}
-
 .cm-cell {
-  flex: 1;
   display: flex;
   flex-direction: column;
   align-items: center;
@@ -337,9 +341,8 @@ p {
 }
 
 .metrics-strip {
-  display: flex;
-  flex-wrap: wrap;
-  justify-content: space-between;
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
   gap: 0.75rem;
   width: 100%;
   margin-top: 1.5rem;
@@ -348,8 +351,6 @@ p {
 }
 
 .metric-pill {
-  flex: 1;
-  min-width: 72px;
   display: flex;
   flex-direction: column;
   align-items: center;
@@ -419,9 +420,12 @@ p {
 /* Responsive adjustments */
 @media (max-width: 900px) {
   .dataset-row,
-  .models-grid,
-  .heatmaps-row {
+  .models-grid {
     flex-direction: column;
+  }
+
+  .heatmaps-row {
+    grid-template-columns: 1fr;
   }
 
   .dataset-map-wrapper {

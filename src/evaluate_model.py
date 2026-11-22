@@ -1,4 +1,7 @@
 def evaluate_model(y_true, y_pred):
+    if len(y_true) != len(y_pred):
+        raise ValueError("Provide one prediction per label.")
+
     # Computes evaluation metrics
     tp = 0
     fp = 0
@@ -8,6 +11,9 @@ def evaluate_model(y_true, y_pred):
     for i in range(len(y_true)):
         actual = y_true[i]
         predicted = y_pred[i]
+
+        if actual not in (0, 1) or predicted not in (0, 1):
+            raise ValueError("Labels and predictions must be 0 or 1.")
 
         if actual == 1 and predicted == 1:
             tp += 1

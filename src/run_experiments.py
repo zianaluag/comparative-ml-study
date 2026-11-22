@@ -91,9 +91,11 @@ def main():
     print(f"Class 0: {statuses.count(0)}")
     print(f"Class 1: {statuses.count(1)}")
 
-    feat_train, feat_test, status_train, status_test, id_train, id_test = split_dataset(
+    feat_train, feat_test, status_train, status_test, _, _ = split_dataset(
         features, statuses, proj_ids
     )
+    if len(feat_train) < 2 or not feat_test:
+        raise SystemExit("Need at least two labeled training projects and one test project.")
 
     print(f"Training samples: {len(feat_train)}")
     print(f"Testing samples: {len(feat_test)}")
@@ -104,8 +106,7 @@ def main():
     normalized_train, normalized_test = normalize(encoded_train, encoded_test)
 
     print("Normalization complete...")
-    print(f"Training features: {len(normalized_train)}")
-    print(f"Testing features: {len(normalized_test)}")
+    print(f"Features per project: {len(normalized_train[0])}")
 
     print("Sample normalized data:")
     print(normalized_train[0] if normalized_train else "No training data")
@@ -139,11 +140,16 @@ def main():
     choice = input("Enter choice (1/2/3): ").strip()
 
     if choice == "1":
-        run_knn(normalized_train, status_train, normalized_test, status_test, k=5)
+        k = 5
+        if len(normalized_train) < k:
+            raise SystemExit(f"KNN needs at least {k} training projects.")
+        run_knn(normalized_train, status_train, normalized_test, status_test, k=k)
     elif choice == "2":
         run_spline_logreg(encoded_train, status_train, encoded_test, status_test)
     elif choice == "3":
         run_gradient_boosted_trees(encoded_train, status_train, encoded_test, status_test)
+    else:
+        raise SystemExit("Choose 1, 2, or 3.")
 
 
 if __name__ == "__main__":

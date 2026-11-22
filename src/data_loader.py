@@ -1,5 +1,6 @@
 import csv
 from datetime import datetime
+from math import isfinite
 import os
 
 BASE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
@@ -15,6 +16,11 @@ def load_csv():
         with open(DATASET_PATH, newline="", encoding="utf-8-sig") as f:
             reader = csv.DictReader(f)
             for row in reader:
+                # DictReader fills missing fields in a short row with None
+                if any(value is None for key, value in row.items() if key != "componentCategory"):
+                    skipped += 1
+                    continue
+
                 # Checks for inconsistencies in data (ie missing data)
                 try: 
                     budget = float(row["budget"])
@@ -26,14 +32,19 @@ def load_csv():
                     report_count = float(row["reportCount"])
                     contract_eff_date = datetime.strptime(row["contractEffectivityDate"].strip(), "%Y-%m-%d")
                     expiry_date = datetime.strptime(row["expiryDate"].strip(), "%Y-%m-%d")
-                    latitude = float(row.get("latitude"))
-                    longitude = float(row.get("longitude"))
-                except(ValueError,TypeError):
+                    latitude = float(row["latitude"])
+                    longitude = float(row["longitude"])
+                except (ValueError, TypeError):
+                    skipped += 1
+                    continue
+
+                numeric_values = (budget, progress, report_count, latitude, longitude)
+                if not all(isfinite(value) for value in numeric_values):
                     skipped += 1
                     continue
 
                 contract_id = row["contractId"]
-                if contract_id in seen_ids:
+                if not contract_id.strip() or contract_id in seen_ids:
                     skipped += 1
                     continue
                 seen_ids.add(contract_id)
@@ -61,8 +72,12 @@ def load_csv():
                     "componentCategory": component_cat,
                 })
     
+    except KeyError as error:
+        print(f"Dataset is missing the {error.args[0]} column.")
+        return []
     except OSError as error:
         print(f"Error loading {DATASET_PATH}: {error.strerror}")
+        return []
 
     print(f"Loaded {len(rows)} rows, skipped {skipped}")
     return rows

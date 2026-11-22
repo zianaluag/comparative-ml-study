@@ -60,7 +60,7 @@ def transform_features(X_data, knots_per_feature):
                 else:
                     new_row.append(0.0)
 
-        # categorical frequency features: retained as linear terms
+        # keep the category delay rates as linear terms
         for col_idx in range(5, len(row)):
             new_row.append(row[col_idx])
 
