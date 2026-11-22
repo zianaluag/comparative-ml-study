@@ -26,13 +26,11 @@ We sort the records by infrastructure year. The first 80% go into the training s
 
 For example, take a 100-day contract marked 100% complete. Finishing five days past expiry gives it `0`. Finishing six days past expiry gives it `1`.
 
-There’s also an unfinished check for **ongoing** projects. The intended rule is to mark them delayed once their expiry date passes and leave them unlabeled until then. With the current `datetime` import, the call to `datetime.now()` raises an error if an ongoing record with an expiry date reaches that check. The loader requires a completion date, and only completed and terminated records pass it in the current CSV.
-
 ## Methods so far
 
 - **Spline logistic regression** (`src/spline_logreg.py`) has training and prediction functions. It uses quadratic splines for budget, year, and planned duration. This lets an extra month on a short contract affect the estimated risk differently from an extra month on a long one.
 - **Extreme Gradient Boosting (XGBoost) decision trees** (`src/gradient_boosted_trees.py`). We wrote a simplified version in NumPy. Each tree adjusts the scores from the earlier trees. The script runs from the CSV through evaluation and predicts `1` when the estimated probability of delay is at least `0.5` by default.
-- **k-nearest neighbors** (`src/knn.py`) checks the Euclidean distance to every training project and takes the most common label among the closest `k`. The faster HNSW search mentioned in our proposal is still on the to-do list.
+- **k-nearest neighbors** (`src/knn.py`) checks the Euclidean distance to every training project and takes the most common label among the closest `k`
 
 We still need to run spline logistic regression and KNN on the same split as the XGBoost model to finish the comparison.
 
