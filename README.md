@@ -21,17 +21,16 @@ We sort the records by infrastructure year. The first 80% go into the training s
 - A **terminated** project gets `1` (delayed).
 - A project marked **completed** with progress below 100% also gets `1`, even if its completion date falls before expiry.
 - For a **completed** project with at least 100% progress, we check how many days it finished past expiry. If that exceeds 5% of the planned duration, it gets `1`. Otherwise, it gets `0` (within the allowance).
+- For an **ongoing** project, if its expiry date has already passed, it gets `1` (delayed), otherwise, it is left unlabeled (`None`).
 - Statuses such as **for procurement** or **not yet started** are left unlabeled (`None`). The XGBoost script drops unlabeled rows from each set after the split.
 
 For example, take a 100-day contract marked 100% complete. Finishing five days past expiry gives it `0`. Finishing six days past expiry gives it `1`.
-
-There’s also an unfinished check for **ongoing** projects. The intended rule is to mark them delayed once their expiry date passes and leave them unlabeled until then. With the current `datetime` import, the call to `datetime.now()` raises an error if an ongoing record with an expiry date reaches that check. The loader requires a completion date, and only completed and terminated records pass it in the current CSV.
 
 ## Methods so far
 
 - **Spline logistic regression** (`src/spline_logreg.py`) has training and prediction functions. It uses quadratic splines for budget, year, and planned duration. This lets an extra month on a short contract affect the estimated risk differently from an extra month on a long one.
 - **Extreme Gradient Boosting (XGBoost) decision trees** (`src/gradient_boosted_trees.py`). We wrote a simplified version in NumPy. Each tree adjusts the scores from the earlier trees. The script runs from the CSV through evaluation and predicts `1` when the estimated probability of delay is at least `0.5` by default.
-- **k-nearest neighbors** (`src/knn.py`) checks the Euclidean distance to every training project and takes the most common label among the closest `k`. The faster HNSW search mentioned in our proposal is still on the to-do list.
+- **k-nearest neighbors** (`src/knn.py`) checks the Euclidean distance to every training project and takes the most common label among the closest `k`
 
 We still need to run spline logistic regression and KNN on the same split as the XGBoost model to finish the comparison.
 
