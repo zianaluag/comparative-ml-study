@@ -275,6 +275,67 @@ def feature_delay(rows, feature_key, min_projects, max_year=2025):
     results.sort(key=lambda x: x[1], reverse=True)
     return results
 
+def run_knn(normalized_train, status_train, normalized_test, status_test, k=5):
+    print("\n--- Initializing and Training Standard NumPy KNN ---")
+    knn_model = KNN(k=k)
+    knn_model.fit(np.array(normalized_train), np.array(status_train, dtype=int))
+
+    predictions = knn_model.predict(np.array(normalized_test))
+    results = evaluate_model(status_test, predictions)
+    cm = results["confusion_matrix"]
+    tn, fp = cm[0][0], cm[0][1]
+    fn, tp = cm[1][0], cm[1][1]
+    print("\n" + "=" * 45)
+    print("        NUMPY KNN FULL EVALUATION RESULTS         ")
+    print("=" * 45)
+    print("Confusion Matrix:")
+    print(f"  [ TN: {tn:6d}  |  FP: {fp:6d} ]")
+    print(f"  [ FN: {fn:6d}  |  TP: {tp:6d} ]")
+    print("-" * 45)
+    print(f"Accuracy:  {results['accuracy'] * 100:6.2f}%")
+    print(f"Precision: {results['precision'] * 100:6.2f}%")
+    print(f"Recall:    {results['recall'] * 100:6.2f}%")
+    print(f"F1-Score:  {results['f1_score'] * 100:6.2f}%")
+    print("=" * 45)
+
+#####spline logistic regression method
+def run_spline_logreg(encoded_train, status_train, encoded_test, status_test):
+    print("\n--- Spline Logistic Regression --- ")
+
+    knots = sl.fit_spline_transform(encoded_train)
+    expanded_train = sl.transform_features(encoded_train, knots)
+    expanded_test = sl.transform_features(encoded_test, knots)
+
+    norm_train, norm_test = normalize(expanded_train, expanded_test)
+
+    X_train = sl.add_intercept(np.array(norm_train))
+    X_test = sl.add_intercept(np.array(norm_test))
+    y_train = np.array(status_train)
+    y_test = np.array(status_test)
+
+    print(f"X_train shape: {X_train.shape}")
+
+    weights, loss_history = sl.train_model(X_train, y_train, learning_rate=0.1, epochs=200)
+    print(f"Loss: first {loss_history[0]:.4f} | mid {loss_history[len(loss_history)//2]:.4f} | last {loss_history[-1]:.4f}")
+
+    probs = sl.predict_proba(X_test, weights)
+    print(f"Probs: min {probs.min():.3f} | max {probs.max():.3f} | mean {probs.mean():.3f}")
+
+    for t in [0.5, 0.4, 0.3, 0.2]:
+        y_pred = sl.predict(X_test, weights, threshold=t)
+        r = evaluate_model(y_test, y_pred)
+        cm = r["confusion_matrix"]
+        tn, fp = cm[0][0], cm[0][1]
+        fn, tp = cm[1][0], cm[1][1]
+
+        print("\n" + "=" * 45)
+        print("Confusion Matrix:")
+        print(f"    [TN]: {tn:6d} | [FP]: {fp:6d}")
+        print(f"    [FN]: {fn:6d} | [TP]: {tp:6d}")
+        print("-" * 45)
+        print(f"Threshold {t}: Accuracy {r['accuracy']*100:.2f}% | Precision {r['precision']*100:.2f}% | Recall {r['recall']*100:.2f}% | F1 Score {r['f1_score']*100:.2f}%")
+        print("=" * 45)
+
 if __name__ == "__main__":
     rows = data_loader.load_csv()
 
@@ -327,64 +388,15 @@ if __name__ == "__main__":
             for line in wrapped[1:]:
                 print(f"  {line:<{name_width}} |         |")
     print("=" * 75 + "\n")
+    print("\nSelect model method to run:")
+    print("  [1] Standard NumPy KNN")
+    print("  [2] Spline Logistic Regression")
+    print("  [3] XGBoost")
+    choice = input("Enter choice (1/2/3): ").strip()
 
-   #####KNN evaluation, uncomment this later, add something like a 1 2 3 to choose which method
-   #####you want to run when all methods have been coded
-    print("\n--- Initializing and Training Standard NumPy KNN ---")
-    knn_model = KNN(k=5)
-    knn_model.fit(np.array(normalized_train), np.array(status_train))
-
-    predictions = knn_model.predict(np.array(normalized_test))
-    results = evaluate_model(status_test, predictions)
-    cm = results["confusion_matrix"]
-    tn, fp = cm[0][0], cm[0][1]
-    fn, tp = cm[1][0], cm[1][1]
-    print("\n" + "=" * 45)
-    print("        NUMPY KNN FULL EVALUATION RESULTS         ")
-    print("=" * 45)
-    print(f"Confusion Matrix:")
-    print(f"  [ TN: {tn:6d}  |  FP: {fp:6d} ]")
-    print(f"  [ FN: {fn:6d}  |  TP: {tp:6d} ]")
-    print("-" * 45)
-    print(f"Accuracy:  {results['accuracy'] * 100:6.2f}%")
-    print(f"Precision: {results['precision'] * 100:6.2f}%")
-    print(f"Recall:    {results['recall'] * 100:6.2f}%")
-    print(f"F1-Score:  {results['f1_score'] * 100:6.2f}%")
-    print("=" * 45)
-
-    #####spline logistic regression method
-    print("\n--- Spline Logistic Regression --- ")
-
-    knots = sl.fit_spline_transform(encoded_train)
-    expanded_train = sl.transform_features(encoded_train, knots)
-    expanded_test = sl.transform_features(encoded_test, knots)
-
-    norm_train, norm_test = normalize(expanded_train, expanded_test)
-
-    X_train = sl.add_intercept(np.array(norm_train))
-    X_test = sl.add_intercept(np.array(norm_test))
-    y_train = np.array(status_train)
-    y_test = np.array(status_test)
-
-    print(f"X_train shape: {X_train.shape}")
-
-    weights, loss_history = sl.train_model(X_train, y_train, learning_rate=0.1, epochs=200)
-    print(f"Loss: first {loss_history[0]:.4f} | mid {loss_history[len(loss_history)//2]:.4f} | last {loss_history[-1]:.4f}")  
-
-    probs = sl.predict_proba(X_test, weights)
-    print(f"Probs: min {probs.min():.3f} | max {probs.max():.3f} | mean {probs.mean():.3f}")
-
-    for t in [0.5, 0.4, 0.3, 0.2]:
-        y_pred = sl.predict(X_test, weights, threshold=t)
-        r = evaluate_model(y_test, y_pred)
-        cm = r["confusion_matrix"]
-        tn, fp = cm[0][0], cm[0][1]
-        fn, tp = cm[1][0], cm[1][1]
-
-        print("\n" + "=" * 45)
-        print("Confusion Matrix:")
-        print(f"    [TN]: {tn:6d} | [FP]: {fp:6d}")
-        print(f"    [FN]: {fn:6d} | [TP]: {tp:6d}")
-        print("-" * 45)
-        print(f"Threshold {t}: Accuracy {r['accuracy']*100:.2f}% | Precision {r['precision']*100:.2f}% | Recall {r['recall']*100:.2f}% | F1 Score {r['f1_score']*100:.2f}%")
-        print("=" * 45)
+    if choice == "1":
+        run_knn(normalized_train, status_train, normalized_test, status_test, k=5)
+    elif choice == "2":
+        run_spline_logreg(encoded_train, status_train, encoded_test, status_test)
+    elif choice == "3":
+        print("wala pa")
