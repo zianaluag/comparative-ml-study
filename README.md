@@ -55,7 +55,7 @@ All three methods report accuracy, precision, recall, F1, and a confusion matrix
 
 On this split, gradient boosted trees had the highest F1 and caught 16,040 of the 21,882 delayed projects. KNN had the highest precision and flagged 2,548 projects that were within the allowance. The spline row uses the 0.20 threshold shown on the project page.
 
-The [project page source](cmsc170-project-fantastic4/) includes the dataset overview, a regional delay map, a category delay chart, and preliminary results for spline logistic regression and KNN.
+The [project page source](website/) includes the dataset overview, a regional delay map, a category delay chart, and preliminary results for spline logistic regression and KNN.
 
 ## Running the code
 
