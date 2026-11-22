@@ -63,7 +63,7 @@ From the repo root, install NumPy and run the model menu.
 
 ```bash
 python -m pip install numpy
-python src/preprocessing.py
+python src/run_experiments.py
 ```
 
 The menu prints the data split and historical delay rates before asking which method to run.
