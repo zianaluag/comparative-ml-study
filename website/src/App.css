@@ -273,7 +273,7 @@ p {
 
 /* Section 5: Results & Discussion */
 .results-setup {
-  margin-bottom: 2.25rem;
+  margin-bottom: clamp(1.25rem, 3vw, 2.25rem);
 }
 
 .results-setup p + p {
@@ -283,21 +283,24 @@ p {
 .heatmaps-row {
   display: grid;
   grid-template-columns: repeat(3, minmax(0, 1fr));
-  gap: 2.25rem;
-  margin-bottom: 2.25rem;
+  column-gap: clamp(1.25rem, 3vw, 2.25rem);
+  margin-bottom: clamp(1.25rem, 3vw, 2.25rem);
 }
 
 .heatmap-panel {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  padding: 2.25rem 2rem;
+  display: grid;
+  grid-row: span 4;
+  grid-template-rows: subgrid;
+  justify-items: center;
+  padding: clamp(1.125rem, 3vw, 2.25rem) clamp(1.125rem, 2.5vw, 2rem);
 }
 
 .heatmap-title {
   font-size: 1.55rem;
   text-align: center;
-  margin-bottom: 1.5rem;
+  text-wrap: balance;
+  align-self: center;
+  margin-bottom: clamp(1rem, 2.5vw, 1.5rem);
 }
 
 .cm-grid {
@@ -314,7 +317,7 @@ p {
   flex-direction: column;
   align-items: center;
   justify-content: center;
-  padding: 1.45rem 1rem;
+  padding: 1.25rem clamp(0.375rem, 1.25vw, 1rem);
   color: #ffffff;
 }
 
@@ -384,11 +387,17 @@ p {
   font-size: 1.15rem;
 }
 
+.cm-value,
+.cm-pct,
+.metric-val {
+  font-variant-numeric: tabular-nums;
+}
+
 .discussion-card {
   display: flex;
   flex-direction: column;
   gap: 1.25rem;
-  padding: 2.25rem 2.5rem;
+  padding: clamp(1.25rem, 4vw, 2.25rem) clamp(1.125rem, 4vw, 2.5rem);
 }
 
 .discussion-heading {
@@ -400,26 +409,26 @@ p {
   font-size: 1.1rem;
 }
 
-/* Section 6: Team (Flexbox Row) */
+/* Section 6: Team */
 .team-row {
-  display: flex;
-  justify-content: space-between;
-  gap: 1.75rem;
-  margin-bottom: 2.75rem;
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: clamp(1rem, 3vw, 1.75rem);
+  margin-bottom: clamp(1.5rem, 4vw, 2.75rem);
 }
 
 .team-member {
-  flex: 1;
   display: flex;
   flex-direction: column;
   align-items: center;
   text-align: center;
-  gap: 1.25rem;
+  gap: clamp(0.75rem, 2vw, 1.25rem);
 }
 
 .avatar {
-  width: 175px;
-  height: 175px;
+  width: min(100%, 175px);
+  height: auto;
+  aspect-ratio: 1;
   border-radius: 50%;
   object-fit: cover;
   overflow: hidden;
@@ -432,6 +441,10 @@ p {
 
 .team-card p {
   font-size: 1.12rem;
+}
+
+.team-card p + p {
+  margin-top: 0.75rem;
 }
 
 /* Responsive adjustments */
@@ -453,16 +466,16 @@ p {
 
   .heatmaps-row {
     grid-template-columns: 1fr;
+    row-gap: 1.25rem;
+  }
+
+  .heatmap-panel {
+    grid-row: auto;
+    grid-template-rows: auto;
   }
 
   .team-row {
-    flex-wrap: wrap;
-    justify-content: center;
-    gap: 2.25rem;
-  }
-
-  .team-member {
-    flex: 0 1 42%;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
   }
 }
 
@@ -494,12 +507,6 @@ p {
 @media (max-width: 28rem) {
   html {
     scroll-padding-top: 10rem;
-  }
-}
-
-@media (max-width: 540px) {
-  .team-member {
-    flex: 1 1 100%;
   }
 }
 
