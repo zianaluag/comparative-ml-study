@@ -13,8 +13,8 @@ def fit_spline_transform(X_train_num, num_knots=2):
     knots_per_feature = []
     num_rows = len(X_train_num)
 
-    # Process budget (0), infraYear (1), and planned_duration (2)
-    for col_idx in range(3):
+    # Process budget (0), infraYear (1), and planned_duration (2), latitude (3), and longitude (4)
+    for col_idx in range(5):
         col_values = []
         for row in X_train_num:
             col_values.append(row[col_idx])
@@ -39,7 +39,7 @@ def transform_features(X_data, knots_per_feature):
         new_row = []
 
         # Numerical features: linear + quadratic + truncated knot terms
-        for col_idx in range(3):
+        for col_idx in range(5):
             val = row[col_idx]
             new_row.append(val)
             new_row.append(val ** 2)
@@ -53,7 +53,7 @@ def transform_features(X_data, knots_per_feature):
                     new_row.append(0.0)
 
         # Categorical frequency features: retained as linear terms
-        for col_idx in range(3, len(row)):
+        for col_idx in range(5, len(row)):
             new_row.append(row[col_idx])
 
         expanded_rows.append(new_row)
