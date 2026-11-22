@@ -1,4 +1,6 @@
 import numpy as np
+
+from evaluate_model import evaluate_model
 from spline_logreg import sigmoid
 
 
@@ -66,20 +68,22 @@ def build_tree(X, gradients, hessians, depth, l2_reg):
 
 
 def tree_predictions(tree, X):
+    X = np.asarray(X)
     updates = np.empty(len(X))
 
-    for i, row in enumerate(X):
-        node = tree
+    def assign_updates(node, rows):
+        if len(rows) == 0:
+            return
+        if "value" in node:
+            updates[rows] = node["value"]
+            return
 
-        # follow the branches until the project reaches a leaf
-        while "value" not in node:
-            if row[node["feature"]] <= node["threshold"]:
-                node = node["left"]
-            else:
-                node = node["right"]
+        # send projects down each branch together, keeping their original indices
+        goes_left = X[rows, node["feature"]] <= node["threshold"]
+        assign_updates(node["left"], rows[goes_left])
+        assign_updates(node["right"], rows[~goes_left])
 
-        updates[i] = node["value"]
-
+    assign_updates(tree, np.arange(len(X)))
     return updates
 
 
@@ -125,6 +129,7 @@ def train_model(X_train, y_train, n_trees=30, max_depth=3, learning_rate=0.1, l2
 
 
 def predict_proba(X, model):
+    X = np.asarray(X)
     scores = np.full(len(X), model["base_score"])
 
     for tree in model["trees"]:
@@ -137,45 +142,49 @@ def predict(X, model, threshold=0.5):
     return (predict_proba(X, model) >= threshold).astype(int)
 
 
-def labeled_rows(features, labels):
-    rows = []
-    targets = []
+def run_gradient_boosted_trees(X_train, y_train, X_test, y_test):
+    # picked by F1 on the newest 20% of the training set
+    n_trees = 90
+    max_depth = 5
+    learning_rate = 0.1
+    l2_reg = 1.0
+    threshold = 0.25
 
-    for row, label in zip(features, labels):
-        if label is not None:
-            rows.append(row)
-            targets.append(label)
-
-    return rows, targets
-
-
-if __name__ == "__main__":
-    from data_loader import load_csv
-    from evaluate_model import evaluate_model
-    from preprocessing import build_dataset, split_dataset, encode_categoricals, normalize
-
-    features, labels, ids = build_dataset(load_csv())
-    X_train, X_test, y_train, y_test, _, _ = split_dataset(features, labels, ids)
-
-    # drop unknown labels after the split so the cutoff stays the same
-    X_train, y_train = labeled_rows(X_train, y_train)
-    X_test, y_test = labeled_rows(X_test, y_test)
-
-    if not y_train or not y_test:
-        raise ValueError("Both the training set and the test set need labeled projects.")
-
-    cat_columns = ["region", "province", "category", "contractor"]
-    X_train, X_test = encode_categoricals(X_train, X_test, cat_columns, y_train)
-    X_train, X_test = normalize(X_train, X_test)
-
-    model = train_model(X_train, y_train)
-    predictions = predict(X_test, model)
-
-    results = evaluate_model(y_test, predictions)
-
+    print("\n--- Gradient Boosted Trees (XGBoost-style) ---")
     print(f"Training projects: {len(y_train)}")
     print(f"Test projects: {len(y_test)}")
+    print(
+        f"Trees {n_trees} | Max depth {max_depth} | Learning rate {learning_rate} | "
+        f"L2 regularization {l2_reg} | Delay threshold {threshold}"
+    )
+    model = train_model(
+        X_train, y_train, n_trees=n_trees, max_depth=max_depth,
+        learning_rate=learning_rate, l2_reg=l2_reg,
+    )
+    predictions = predict(X_test, model, threshold=threshold)
+    results = evaluate_model(y_test, predictions)
+
     print("Confusion matrix [[TN, FP], [FN, TP]]:", results["confusion_matrix"])
 
     for metric in ("accuracy", "precision", "recall", "f1_score"):
         print(f"{metric}: {results[metric]:.4f}")
+
+
+if __name__ == "__main__":
+    from data_loader import load_csv
+    from preprocessing import (
+        CATEGORICAL_COLUMNS,
+        build_dataset,
+        encode_categoricals,
+        split_dataset,
+    )
+
+    features, labels, ids = build_dataset(load_csv())
+    train_rows, test_rows, y_train, y_test, _, _ = split_dataset(features, labels, ids)
+
+    if not y_train or not y_test:
+        raise ValueError("Both the training set and the test set need labeled projects.")
+
+    # trees split on feature order, so the encoded features can be used as-is
+    X_train, X_test = encode_categoricals(train_rows, test_rows, CATEGORICAL_COLUMNS, y_train)
+    run_gradient_boosted_trees(X_train, y_train, X_test, y_test)
