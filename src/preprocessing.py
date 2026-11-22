@@ -1,7 +1,7 @@
 import data_loader
 import random
 import math
-import evaluate_model
+from evaluate_model import evaluate_model
 from knn import KNN
 from datetime import datetime
 import textwrap
@@ -271,14 +271,18 @@ if __name__ == "__main__":
 
    #KNN evaluation, uncomment this later, add something like a 1 2 3 to choose which method
    #you want to run when all methods have been coded
-    """print("\n--- Initializing and Training Standard NumPy KNN ---")
+    print("\n--- Initializing and Training Standard NumPy KNN ---")
     x_train = np.asarray(normalized_train)
     y_train = np.asarray(status_train)
     x_test = np.asarray(normalized_test)
+    y_test = status_test
+    sample_size = 200
+    x_test = np.asarray(normalized_test)[:sample_size]
+    y_test = status_test[:sample_size]
     knn_model = KNN(k=5)
     knn_model.fit(x_train, y_train)
     predictions = knn_model.predict(x_test)
-    results = evaluate_model(status_test, predictions)
+    results = evaluate_model(y_test, predictions)
     cm = results["confusion_matrix"]
     tn, fp = cm[0][0], cm[0][1]
     fn, tp = cm[1][0], cm[1][1]
@@ -293,4 +297,4 @@ if __name__ == "__main__":
     print(f"Precision: {results['precision'] * 100:6.2f}%")
     print(f"Recall:    {results['recall'] * 100:6.2f}%")
     print(f"F1-Score:  {results['f1_score'] * 100:6.2f}%")
-    print("=" * 45)"""
+    print("=" * 45)
