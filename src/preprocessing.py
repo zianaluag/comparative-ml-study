@@ -59,10 +59,13 @@ def build_features(row):
         "budget": row["budget"],
         "infraYear": row["infraYear"],
         "planned_duration": planned_duration(row),
+        "latitude": row["latitude"],
+        "longitude": row["longitude"],
         "region": row["region"],
         "province": row["province"],
         "category": row["category"],
-        "contractor": row["contractor"]
+        "componentCategory": row["componentCategory"],
+        "contractor": row["contractor"],
     }
 
 
@@ -136,7 +139,7 @@ def apply_encoding(data_list, cat_columns, rates, global_rate):
     encoded_data = []
     for row in data_list:
         #start with base numerical features
-        encoded_row = [row["budget"], row["infraYear"], row["planned_duration"]]
+        encoded_row = [row["budget"], row["infraYear"], row["planned_duration"], row["latitude"], row["longitude"]]
         
         #append the learned frequency score for each categorical column
         for col in cat_columns:
@@ -289,7 +292,7 @@ if __name__ == "__main__":
 
     print(f"Training samples: {len(feat_train)}")
     print(f"Testing samples: {len(feat_test)}")
-    cat_columns = ["region", "province", "category", "contractor"]
+    cat_columns = ["region", "province", "category", "componentCategory", "contractor"]
     encoded_train, encoded_test = encode_categoricals(feat_train, feat_test, cat_columns, status_train)
     
     normalized_train, normalized_test = normalize(encoded_train, encoded_test)
@@ -301,8 +304,7 @@ if __name__ == "__main__":
     print("Sample normalized data:")
     print(normalized_train[0] if normalized_train else "No training data")
 
-    target_columns = ["region", "province", "category", "contractor"]
-    target_columns = ["region", "province", "category", "contractor"]
+    target_columns = ["region", "province", "category", "componentCategory", "contractor"]
     name_width = 150
 
     for col in target_columns:

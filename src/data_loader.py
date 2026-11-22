@@ -39,6 +39,8 @@ def load_csv():
                     report_count = float(row["reportCount"])
                     contract_eff_date = datetime.strptime(row["contractEffectivityDate"].strip(), "%Y-%m-%d")
                     expiry_date = datetime.strptime(row["expiryDate"].strip(), "%Y-%m-%d")
+                    latitude = float(row.get("latitude"))
+                    longitude = float(row.get("longitude"))
                 except(ValueError,TypeError):
                     skipped += 1
                     continue
@@ -48,8 +50,8 @@ def load_csv():
                     skipped += 1
                     continue
                 seen_ids.add(contract_id)
-
-                rows.append({
+                component_cat = (row.get("componentCategory") or "").strip() or "Unknown"
+                rows.append({   
                     "contractId": contract_id,
                     "description": row["description"],
                     "category": row["category"],
@@ -67,6 +69,9 @@ def load_csv():
                     "reportCount": report_count,
                     "contractEffectivityDate": contract_eff_date,
                     "expiryDate": expiry_date,
+                    "latitude": latitude,
+                    "longitude": longitude,
+                    "componentCategory": component_cat,
                 })
     
     except OSError:
