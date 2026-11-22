@@ -33,7 +33,8 @@ def load_csv():
                     budget = float(row["budget"])
                     progress = float(row["progress"])
                     start_date = datetime.strptime(row["startDate"].strip(), "%Y-%m-%d")
-                    completion_date = datetime.strptime(row["completionDate"].strip(), "%Y-%m-%d")
+                    raw_comp = row["completionDate"].strip()
+                    completion_date = datetime.strptime(raw_comp, "%Y-%m-%d") if raw_comp else None
                     infra_year = int(row["infraYear"])
                     report_count = float(row["reportCount"])
                     contract_eff_date = datetime.strptime(row["contractEffectivityDate"].strip(), "%Y-%m-%d")

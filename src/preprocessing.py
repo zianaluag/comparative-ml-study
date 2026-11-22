@@ -3,15 +3,22 @@ import random
 import math
 import evaluate_model
 from knn import KNN
-import datetime
+from datetime import datetime
+import textwrap
 # Supposed duration of the infrastructure projects before exceeding expiry data
 def planned_duration(row):
+    if row["expiryDate"] is None or row["contractEffectivityDate"] is None:
+        return -1
     return (row["expiryDate"] - row["contractEffectivityDate"]).days
 
 
 # Delay days checker with 5% tolerance
 def is_delayed(row):
+    if row["completionDate"] is None or row["expiryDate"] is None:
+        return False
     planned = planned_duration(row)
+    if planned < 0:
+        return False
     delay = (row["completionDate"] - row["expiryDate"]).days
     tolerance = planned * 0.05
 
@@ -26,15 +33,15 @@ def build_status(row):
         return 1
 
     if status == "completed":
+        if row["completionDate"] is None:
+            return None
         if row["progress"] < 100.0:
-            return 1
-        
+            return 1  
         if is_delayed(row):
             return 1
         return 0
     
     if "ongoing" in status or "on-going" in status:
-        #if it's past its expiry date,
         expiry = row.get("expiryDate")
         if expiry and datetime.now() > expiry:
             return 1
@@ -67,6 +74,9 @@ def build_dataset(rows, max_year=2025):
             continue
 
         status = build_status(row)
+        
+        if status is None:
+            continue
 
         duration = planned_duration(row)
         if duration < 0:
@@ -175,10 +185,12 @@ def normalize(num_train, num_test):
     return normalized_num_train, normalized_num_test
 
 
-def feature_delay(rows, feature_key, min_projects):
+def feature_delay(rows, feature_key, min_projects, max_year=2025):
     #get the delay rate for the historical features, ignore anything wIth less than min
     stats = {}
     for row in rows:
+        if row.get("infraYear") is None or row["infraYear"] > max_year:
+            continue
         val = row.get(feature_key)
         if val is None:
             continue
@@ -232,20 +244,29 @@ if __name__ == "__main__":
     print(normalized_train[0] if normalized_train else "No training data")
 
     target_columns = ["region", "province", "category", "contractor"]
-    
+    target_columns = ["region", "province", "category", "contractor"]
+    name_width = 150
+
     for col in target_columns:
-        print(f"\n" + "=" * 55)
-        min_projects = 5
-        analysis_results = feature_delay(rows, col, min_projects)
-        print(f"  TOP DELAY-PRONE ENTITIES BY: {col.upper()} (Min Projects > {min_projects})")
-        print("=" * 55)
-        
+        analysis_results = feature_delay(rows, col, min_projects=5, max_year=2025)
+        header = f"TOP DELAY-PRONE BY {col.upper()} (Projects > {5}, <= {2025})"
+
+        print(f"\n{header}")
+        print("-" * len(header))
+
         if not analysis_results:
             print("  No qualifying records found.")
-        else:
-            for val, rate, count in analysis_results[:15]:
-                print(f"  {val[:40]:<40} | Delay Rate: {rate:6.2f}% | Projects: {count}")
-    print("=" * 55 + "\n")
+            continue
+
+        print(f"  {'Entity':<{name_width}} | {'Delay':>7} | {'Projects':>8}")
+        print(f"  {'-' * name_width}-+-{'-' * 7}-+-{'-' * 8}")
+
+        for val, rate, count in analysis_results[:100]:
+            wrapped = textwrap.wrap(str(val), width=name_width) or [""]
+            print(f"  {wrapped[0]:<{name_width}} | {rate:6.2f}% | {count:8d}")
+            for line in wrapped[1:]:
+                print(f"  {line:<{name_width}} |         |")
+    print("=" * 75 + "\n")
 
    #KNN evaluation, uncomment this later, add something like a 1 2 3 to choose which method
    #you want to run when all methods have been coded
