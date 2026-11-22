@@ -158,7 +158,6 @@ p {
 
 .hero-text {
   font-size: 1.12rem;
-  max-width: 76ch;
 }
 
 /* Cards */
@@ -166,10 +165,6 @@ p {
   background-color: var(--charcoal);
   border-radius: 16px;
   padding: clamp(1rem, 3.6vw, 2rem) clamp(1.125rem, 4vw, 2.25rem);
-}
-
-:is(.abstract-card, .summary-card, .results-setup, .discussion-card, .team-card) p {
-  max-width: 78ch;
 }
 
 /* Section 2: Abstract */
