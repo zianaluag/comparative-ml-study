@@ -1,16 +1,19 @@
-# React + Vite
+# DPWH Project Delay Study
 
-This template provides a minimal setup to get React working in Vite with HMR and some ESLint rules.
+This is the website for our CMSC 170 project. It shows the dataset, the three models we compared, and our results so far. See the [main README](../README.md) for the Python experiments.
 
-Currently, two official plugins are available:
+## Run locally
 
-- [@vitejs/plugin-react](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react) uses [Oxc](https://oxc.rs)
-- [@vitejs/plugin-react-swc](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react-swc) uses [SWC](https://swc.rs/)
+With Node.js 24 installed, run these commands from the repository root.
 
-## React Compiler
+```bash
+cd website
+npm ci
+npm run dev
+```
 
-The React Compiler is not enabled on this template because of its impact on dev & build performances. To add it, see [this documentation](https://react.dev/learn/react-compiler/installation).
+Open the local URL printed by Vite.
 
-## Expanding the ESLint configuration
+## Build the site
 
-If you are developing a production application, we recommend using TypeScript with type-aware lint rules enabled. Check out the [TS template](https://github.com/vitejs/vite/tree/main/packages/create-vite/template-react-ts) for information on how to integrate TypeScript and [`typescript-eslint`](https://typescript-eslint.io) in your project.
+From `website/`, run `npm run build` to write the production files to `dist/`. Run `npm run preview` to check the build locally. The site uses `/comparative-ml-study/` as its GitHub Pages base path.

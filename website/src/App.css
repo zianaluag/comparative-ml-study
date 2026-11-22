@@ -1,18 +1,3 @@
-/* Optional: Place Helvetica Now .woff2 files in src/assets/ if available */
-@font-face {
-  font-family: "Helvetica Now";
-  src: url("./assets/HelveticaNowDisplay-Bold.woff2") format("woff2");
-  font-weight: 700;
-  font-style: normal;
-}
-
-@font-face {
-  font-family: "Helvetica Now";
-  src: url("./assets/HelveticaNowDisplay-BoldItalic.woff2") format("woff2");
-  font-weight: 700;
-  font-style: italic;
-}
-
 :root {
   --pink: #ff5675;
   --red-dark: #da4629;
@@ -31,7 +16,7 @@
 
 html {
   scroll-behavior: smooth;
-  font-family: "Helvetica Now", "Helvetica Neue", Helvetica, Arial, sans-serif;
+  font-family: "Helvetica Neue", Helvetica, Arial, sans-serif;
   font-weight: 700;
   color: var(--cream);
   background-color: #0b111a;
