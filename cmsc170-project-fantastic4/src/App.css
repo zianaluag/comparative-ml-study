@@ -1,4 +1,4 @@
-
+/* Optional: Place Helvetica Now .woff2 files in src/assets/ if available */
 @font-face {
   font-family: "Helvetica Now";
   src: url("./assets/HelveticaNowDisplay-Bold.woff2") format("woff2");
@@ -115,6 +115,9 @@ p {
 .nav-home {
   color: var(--teal);
 }
+.nav-dataset {
+  color: var(--pink);
+}
 .nav-models {
   color: var(--orange);
 }
@@ -178,7 +181,37 @@ p {
   font-size: 1.12rem;
 }
 
-/* Section 3: Models (Flexbox Row) */
+/* Section 3: Dataset (Flexbox Row) */
+.dataset-row {
+  display: flex;
+  align-items: center;
+  gap: 2.5rem;
+}
+
+.dataset-map-wrapper {
+  flex: 0 0 44%;
+  width: 44%;
+  border-radius: 12px;
+  overflow: hidden;
+}
+
+.dataset-map-wrapper iframe {
+  display: block;
+}
+
+.dataset-card {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 1.25rem;
+  padding: 2.25rem 2.5rem;
+}
+
+.dataset-card p {
+  font-size: 1.1rem;
+}
+
+/* Section 4: Models (Flexbox Row) */
 .models-grid {
   display: flex;
   gap: 2.25rem;
@@ -211,7 +244,7 @@ p {
   font-size: 1.12rem;
 }
 
-/* Section 4: Team (Flexbox Row) */
+/* Section 5: Team (Flexbox Row) */
 .team-row {
   display: flex;
   justify-content: space-between;
@@ -247,8 +280,14 @@ p {
 
 /* Responsive adjustments */
 @media (max-width: 900px) {
+  .dataset-row,
   .models-grid {
     flex-direction: column;
+  }
+
+  .dataset-map-wrapper {
+    flex: 1 1 100%;
+    width: 100%;
   }
 
   .team-row {

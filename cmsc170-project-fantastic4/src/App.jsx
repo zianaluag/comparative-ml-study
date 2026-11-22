@@ -1,3 +1,4 @@
+import { useEffect } from "react";
 import "./App.css";
 import logo from "./assets/logo.png";
 import bgImage from "./assets/bg.png";
@@ -7,6 +8,25 @@ import frannieAvatar from "./assets/frannie.png";
 import desmondAvatar from "./assets/desmond.png";
 
 function App() {
+  // Automatically resize the Datawrapper iframe height
+  useEffect(() => {
+    const handleMessage = (e) => {
+      if (e.data && e.data["datawrapper-height"] !== undefined) {
+        const iframes = document.querySelectorAll("iframe");
+        for (const key in e.data["datawrapper-height"]) {
+          for (let i = 0; i < iframes.length; i++) {
+            if (iframes[i].contentWindow === e.source) {
+              iframes[i].style.height = e.data["datawrapper-height"][key] + "px";
+            }
+          }
+        }
+      }
+    };
+
+    window.addEventListener("message", handleMessage);
+    return () => window.removeEventListener("message", handleMessage);
+  }, []);
+
   return (
     <div
       className="page"
@@ -20,6 +40,7 @@ function App() {
           </a>
           <nav className="nav-links">
             <a href="#home" className="nav-home">Home</a>
+            <a href="#dataset" className="nav-dataset">Dataset</a>
             <a href="#models" className="nav-models">Models</a>
             <a href="#about" className="nav-about">About Us</a>
           </nav>
@@ -81,7 +102,64 @@ function App() {
           </div>
         </section>
 
-        {/* Section 3: Three Approaches */}
+        {/* Section 3: Dataset */}
+        <section id="dataset" className="section dataset-section">
+          <h2 className="section-heading text-orange">Dataset</h2>
+
+          <div className="dataset-row">
+            <div className="dataset-map-wrapper">
+              <iframe
+                title="DPWH Infrastructure Project Delay Rates Across Philippine Regions"
+                aria-label="Choropleth map"
+                id="datawrapper-chart-Qc79t"
+                src="https://datawrapper.dwcdn.net/Qc79t/8/"
+                scrolling="no"
+                frameBorder="0"
+                style={{ width: "0", minWidth: "100%", border: "none" }}
+                height="936"
+                data-external="1"
+              />
+            </div>
+
+            <div className="card dataset-card">
+              <p>
+                Our dataset integrates public infrastructure contract records
+                from the{" "}
+                <span className="text-teal">BetterGov Open Data Portal</span>{" "}
+                and project-level schedule and bidding records from the{" "}
+                <span className="text-teal">DPWH Transparency Portal</span>,
+                spanning <span className="text-orange">215,277 contracts</span>{" "}
+                across <span className="text-orange">19 regions</span> and{" "}
+                <span className="text-orange">
+                  220 District Engineering Offices
+                </span>{" "}
+                (2016–2026).
+              </p>
+
+              <p>
+                Each entry captures pre-execution contract attributes—including
+                approved budget (median{" "}
+                <span className="text-teal">₱9.85M</span>), infrastructure
+                category (roads, buildings, flood control, bridges, and water
+                systems), contractor, funding source, geographic coordinates,
+                and contract effectivity, expiry, and actual completion dates.
+              </p>
+
+              <p>
+                Evaluating{" "}
+                <span className="text-pink">
+                  188,401 completed contracts
+                </span>{" "}
+                with verified timelines,{" "}
+                <span className="text-pink">24.16% (45,514 projects)</span>{" "}
+                finished past their contract expiry dates, with regional delay
+                rates varying sharply across the archipelago.
+              </p>
+            </div>
+          </div>
+        </section>
+
+        {/* Section 4: Three Approaches */}
         <section id="models" className="section models-section">
           <div className="models-grid">
             <div className="model-column">
@@ -136,7 +214,7 @@ function App() {
           </div>
         </section>
 
-        {/* Section 4: Team */}
+        {/* Section 5: Team */}
         <section id="about" className="section team-section">
           <h2 className="section-heading text-orange">Team</h2>
 
