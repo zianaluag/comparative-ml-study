@@ -21,6 +21,7 @@ We sort the records by infrastructure year. The first 80% go into the training s
 - A **terminated** project gets `1` (delayed).
 - A project marked **completed** with progress below 100% also gets `1`, even if its completion date falls before expiry.
 - For a **completed** project with at least 100% progress, we check how many days it finished past expiry. If that exceeds 5% of the planned duration, it gets `1`. Otherwise, it gets `0` (within the allowance).
+- For an **ongoing** project, if its expiry date has already passed, it gets `1` (delayed), otherwise, it is left unlabeled (`None`).
 - Statuses such as **for procurement** or **not yet started** are left unlabeled (`None`). The XGBoost script drops unlabeled rows from each set after the split.
 
 For example, take a 100-day contract marked 100% complete. Finishing five days past expiry gives it `0`. Finishing six days past expiry gives it `1`.
