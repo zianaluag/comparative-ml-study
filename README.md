@@ -1,6 +1,11 @@
 # Predicting Delays in DPWH Infrastructure Projects with Machine Learning
 
-CMSC 170: Introduction to Artificial Intelligence, 1st Semester 2026-2027, UP Los Baños
+## Members
+
+- Aluag, Zander Ian C. ([zianaluag](https://github.com/zianaluag))
+- Caraig, Bernard Alejandro C. ([herio-nn](https://github.com/herio-nn))
+- Perez, Desmond Rainier B. ([desmondperez](https://github.com/desmondperez))
+- Tandang, Frannieczeska Erene U. ([ririlinn](https://github.com/ririlinn))
 
 ## Research objective
 
@@ -12,43 +17,63 @@ We look at how often projects ran late across regions, provinces, project catego
 
 We use `datasets/dpwh_data.csv`. The project records come from the [BetterGov Open Data Portal](https://data.bettergov.ph/datasets/19/resources/406). The contract dates come from the [DPWH Transparency Portal](https://transparency.dpwh.gov.ph/).
 
-We sort the records by infrastructure year. The first 80% go into the training set and the last 20% go into the test set. We use the training set to work out category frequencies and scale the features.
+The loader skips duplicate contract IDs and rows with invalid or missing required values. Before splitting the data, we keep projects through infrastructure year 2025 that have a label and a nonnegative planned duration. This gives us 213,418 projects for the comparison. We sort them by infrastructure year and use the first 80% for training (170,734 projects) and the last 20% for testing (42,684 projects).
+
+All three methods start with the same 10 inputs. The numerical features are budget, infrastructure year, planned duration, latitude, and longitude. The categorical features are region, province, category, component category, and contractor.
+
+We represent each category with a delay rate pulled toward the overall training rate. We divide the training set into five groups and use the other four groups to calculate the rates for each group. For test rows, we use rates from the entire training set. Unseen categories get the overall training delay rate.
 
 ## What counts as delayed?
 
 `src/preprocessing.py` assigns each project a label using its status, reported progress, and completion date. The planned duration is the number of days from the contract effectivity date to the recorded expiry date.
 
 - A **terminated** project gets `1` (delayed).
-- A project marked **completed** with progress below 100% also gets `1`, even if its completion date falls before expiry.
-- For a **completed** project with at least 100% progress, we check how many days it finished past expiry. If that exceeds 5% of the planned duration, it gets `1`. Otherwise, it gets `0` (within the allowance).
-- For an **ongoing** project, if its expiry date has already passed, it gets `1` (delayed), otherwise, it is left unlabeled (`None`).
-- Statuses such as **for procurement** or **not yet started** are left unlabeled (`None`). The XGBoost script drops unlabeled rows from each set after the split.
+- A project marked **completed** with a recorded completion date and progress below 100% also gets `1`, even if its completion date falls before expiry.
+- For a **completed** project with at least 100% progress and a recorded completion date, we check how many days it finished past expiry. If that exceeds 5% of the planned duration, it gets `1`. Otherwise, it gets `0` (within the allowance).
+- An **ongoing** project gets `1` if its expiry date has passed when the script runs. Otherwise, it is left unlabeled (`None`).
+- A **completed** project with a missing completion date is left unlabeled. Projects marked **for procurement** or **not yet started** also stay unlabeled.
 
 For example, take a 100-day contract marked 100% complete. Finishing five days past expiry gives it `0`. Finishing six days past expiry gives it `1`.
 
 ## Methods so far
 
-- **Spline logistic regression** (`src/spline_logreg.py`) has training and prediction functions. It uses quadratic splines for budget, year, and planned duration. This lets an extra month on a short contract affect the estimated risk differently from an extra month on a long one.
-- **Extreme Gradient Boosting (XGBoost) decision trees** (`src/gradient_boosted_trees.py`). We wrote a simplified version in NumPy. Each tree adjusts the scores from the earlier trees. The script runs from the CSV through evaluation and predicts `1` when the estimated probability of delay is at least `0.5` by default.
-- **k-nearest neighbors** (`src/knn.py`) checks the Euclidean distance to every training project and takes the most common label among the closest `k`
+We implemented all three methods from scratch in Python using NumPy.
 
-We still need to run spline logistic regression and KNN on the same split as the XGBoost model to finish the comparison.
+- **Spline logistic regression** (`src/spline_logreg.py`) uses quadratic splines for all five numerical features. This lets an extra month on a short contract affect the estimated risk differently from an extra month on a long one. We fit two knots per feature on the training data and scale the expanded features using training statistics. We train for 200 epochs with a learning rate of 0.1 and L2 regularization of 0.01.
+- **XGBoost-style gradient boosted trees** (`src/gradient_boosted_trees.py`) builds a series of small decision trees. Each tree adjusts the scores from the earlier trees. For the current run, we use 90 trees with a maximum depth of 5, a learning rate of 0.1, L2 regularization of 1.0, and a delay threshold of 0.25. We chose the tree count, depth, and threshold by F1 on the newest 20% of the training set, then refit on all the training projects.
+- **k-nearest neighbors** (`src/knn.py`) uses features scaled with training statistics. It checks the Euclidean distance to every training project and predicts the most common label among the five closest projects.
+
+## Results so far
+
+All three methods report accuracy, precision, recall, F1, and a confusion matrix on the same test split. The 42,684 test projects include 21,882 delayed projects and 20,802 within the allowance. We ran the comparison with Python 3.12.14 and NumPy 2.3.5.
+
+| Method | Setting | Accuracy | Precision | Recall | F1 |
+| --- | --- | ---: | ---: | ---: | ---: |
+| Spline logistic regression | Threshold 0.20 | 64.08% | 62.93% | 72.89% | 0.6754 |
+| Gradient boosted trees | Threshold 0.25 | 67.47% | 66.60% | 73.30% | 0.6979 |
+| k-nearest neighbors | `k = 5` | 59.95% | 74.22% | 33.52% | 0.4618 |
+
+On this split, gradient boosted trees had the highest F1 and caught 16,040 of the 21,882 delayed projects. KNN had the highest precision and flagged 2,548 projects that were within the allowance. The spline row uses the 0.20 threshold shown on the project page.
+
+The [project page source](cmsc170-project-fantastic4/) includes the dataset overview, a regional delay map, a category delay chart, and preliminary results for spline logistic regression and KNN.
 
 ## Running the code
 
-From the repo root, install NumPy with `python -m pip install numpy`. You can then run either script.
+From the repo root, install NumPy and run the model menu.
 
 ```bash
-# check the data split and past delay rates
+python -m pip install numpy
 python src/preprocessing.py
-
-# train and evaluate the XGBoost decision trees
-python src/gradient_boosted_trees.py
 ```
 
-## Members
+The menu prints the data split and historical delay rates before asking which method to run.
 
-- Aluag, Zander Ian C. ([zianaluag](https://github.com/zianaluag))
-- Caraig, Bernard Alejandro C. ([herio-nn](https://github.com/herio-nn))
-- Perez, Desmond Rainier B. ([desmondperez](https://github.com/desmondperez))
-- Tandang, Frannieczeska Erene U. ([ririlinn](https://github.com/ririlinn))
+- Enter `1` for k-nearest neighbors. A full run can take several minutes because it checks every training project for each test project.
+- Enter `2` for spline logistic regression. It reports results at thresholds 0.50, 0.40, 0.30, and 0.20.
+- Enter `3` for gradient boosted trees.
+
+You can also run gradient boosted trees directly.
+
+```bash
+python src/gradient_boosted_trees.py
+```
