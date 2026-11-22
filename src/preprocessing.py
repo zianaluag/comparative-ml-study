@@ -1,8 +1,11 @@
 import data_loader
 import random
 import math
+
 from evaluate_model import evaluate_model
 from knn import KNN
+import spline_logreg as sl
+
 from datetime import datetime
 import textwrap
 import numpy as np
@@ -109,7 +112,27 @@ def split_dataset(features, status, proj_ids, test_size=0.2):
 
     return feat_train, feat_test, status_train, status_test, id_train, id_test
 
-def apply_encoding(data_list, cat_columns, frequencies):
+
+def learn_rates(features, statuses, cat_columns, m):
+    global_rate = sum(statuses)/len(statuses)
+    rates = {col: {} for col in cat_columns}
+
+    for col in cat_columns:
+        counts = {} # value -> [total, delayed]
+        for row, status in zip(features, statuses):
+            val = row[col]
+            if val not in counts:
+                counts[val] = [0, 0]
+            counts[val][0] += 1
+            counts[val][1] += status
+
+        for val, (total, delayed) in counts.items():
+            rates[col][val] = (delayed + m * global_rate) / (total + m)
+
+    return rates, global_rate
+
+
+def apply_encoding(data_list, cat_columns, rates, global_rate):
     encoded_data = []
     for row in data_list:
         #start with base numerical features
@@ -118,27 +141,61 @@ def apply_encoding(data_list, cat_columns, frequencies):
         #append the learned frequency score for each categorical column
         for col in cat_columns:
             #if a test category was never seen during training, default to 0.0 frequency
-            encoded_row.append(frequencies[col].get(row[col], 0.0))
+            encoded_row.append(rates[col].get(row[col], global_rate))
         
         encoded_data.append(encoded_row)
         
     return encoded_data
 
-def encode_categoricals(train_features, test_features, cat_columns):
-    frequencies = {col: {} for col in cat_columns}
-    #learn frequencies from just the training data/in order to not get clairvoyance from the test data
-    for row in train_features:
-        for col in cat_columns:
-            val = row[col]
-            frequencies[col][val] = frequencies[col].get(val, 0) + 1
-            
-    train_size = len(train_features)
-    for col in cat_columns:#gives us the frequencies of the categories
-        for val in frequencies[col]:
-            frequencies[col][val] /= train_size
-    encoded_train = apply_encoding(train_features, cat_columns, frequencies)
-    encoded_test = apply_encoding(test_features, cat_columns, frequencies)
+def encode_categoricals(train_features, test_features, cat_columns, status_train, m=10, n_folds=5):
+    encoded_train = [None] * len(train_features)
+
+    # Learn frequencies using training data
+    for fold in range(n_folds):
+        fit_features = []
+        fit_statuses = []
+        held_idx = []
+
+        # Separate the training data into 5 folds
+        for i in range(len(train_features)):
+            if i%n_folds == fold:
+                held_idx.append(i)
+            else:
+                # Learning folds
+                fit_features.append(train_features[i])
+                fit_statuses.append(status_train[i])
+
+        # Get category rates from other groups
+        rates, global_rate = learn_rates(fit_features, fit_statuses, cat_columns, m)
+
+        # Encode the held-out fold
+        held_rows = [train_features[i] for i in held_idx]
+        encoded_held = apply_encoding(held_rows, cat_columns, rates, global_rate)
+
+        # Restore encoded rows to original positions
+        for i, enc_row in zip(held_idx, encoded_held):
+            encoded_train[i] = enc_row
+
+    # Get category rates using all training data
+    rates, global_rate = learn_rates(train_features, status_train, cat_columns, m)
+
+    # Encode test data
+    encoded_test = apply_encoding(test_features, cat_columns, rates, global_rate)
+
     return encoded_train, encoded_test
+
+    # for row in train_features:
+    #     for col in cat_columns:
+    #         val = row[col]
+    #         frequencies[col][val] = frequencies[col].get(val, 0) + 1
+            
+    # train_size = len(train_features)
+    # for col in cat_columns:#gives us the frequencies of the categories
+    #     for val in frequencies[col]:
+    #         frequencies[col][val] /= train_size
+    # encoded_train = apply_encoding(train_features, cat_columns, frequencies)
+    # encoded_test = apply_encoding(test_features, cat_columns, frequencies)
+    # return encoded_train, encoded_test
 
 # apply normalization to the numerical statistics
 def normalizer(num_stats, means, std_devs):
@@ -233,7 +290,7 @@ if __name__ == "__main__":
     print(f"Training samples: {len(feat_train)}")
     print(f"Testing samples: {len(feat_test)}")
     cat_columns = ["region", "province", "category", "contractor"]
-    encoded_train, encoded_test = encode_categoricals(feat_train, feat_test, cat_columns)
+    encoded_train, encoded_test = encode_categoricals(feat_train, feat_test, cat_columns, status_train)
     
     normalized_train, normalized_test = normalize(encoded_train, encoded_test)
 
@@ -269,20 +326,14 @@ if __name__ == "__main__":
                 print(f"  {line:<{name_width}} |         |")
     print("=" * 75 + "\n")
 
-   #KNN evaluation, uncomment this later, add something like a 1 2 3 to choose which method
-   #you want to run when all methods have been coded
+   #####KNN evaluation, uncomment this later, add something like a 1 2 3 to choose which method
+   #####you want to run when all methods have been coded
     print("\n--- Initializing and Training Standard NumPy KNN ---")
-    x_train = np.asarray(normalized_train)
-    y_train = np.asarray(status_train)
-    x_test = np.asarray(normalized_test)
-    y_test = status_test
-    sample_size = 200
-    x_test = np.asarray(normalized_test)[:sample_size]
-    y_test = status_test[:sample_size]
     knn_model = KNN(k=5)
-    knn_model.fit(x_train, y_train)
-    predictions = knn_model.predict(x_test)
-    results = evaluate_model(y_test, predictions)
+    knn_model.fit(np.array(normalized_train), np.array(status_train))
+
+    predictions = knn_model.predict(np.array(normalized_test))
+    results = evaluate_model(status_test, predictions)
     cm = results["confusion_matrix"]
     tn, fp = cm[0][0], cm[0][1]
     fn, tp = cm[1][0], cm[1][1]
@@ -298,3 +349,40 @@ if __name__ == "__main__":
     print(f"Recall:    {results['recall'] * 100:6.2f}%")
     print(f"F1-Score:  {results['f1_score'] * 100:6.2f}%")
     print("=" * 45)
+
+    #####spline logistic regression method
+    print("\n--- Spline Logistic Regression --- ")
+
+    knots = sl.fit_spline_transform(encoded_train)
+    expanded_train = sl.transform_features(encoded_train, knots)
+    expanded_test = sl.transform_features(encoded_test, knots)
+
+    norm_train, norm_test = normalize(expanded_train, expanded_test)
+
+    X_train = sl.add_intercept(np.array(norm_train))
+    X_test = sl.add_intercept(np.array(norm_test))
+    y_train = np.array(status_train)
+    y_test = np.array(status_test)
+
+    print(f"X_train shape: {X_train.shape}")
+
+    weights, loss_history = sl.train_model(X_train, y_train, learning_rate=0.1, epochs=200)
+    print(f"Loss: first {loss_history[0]:.4f} | mid {loss_history[len(loss_history)//2]:.4f} | last {loss_history[-1]:.4f}")  
+
+    probs = sl.predict_proba(X_test, weights)
+    print(f"Probs: min {probs.min():.3f} | max {probs.max():.3f} | mean {probs.mean():.3f}")
+
+    for t in [0.5, 0.4, 0.3, 0.2]:
+        y_pred = sl.predict(X_test, weights, threshold=t)
+        r = evaluate_model(y_test, y_pred)
+        cm = r["confusion_matrix"]
+        tn, fp = cm[0][0], cm[0][1]
+        fn, tp = cm[1][0], cm[1][1]
+
+        print("\n" + "=" * 45)
+        print("Confusion Matrix:")
+        print(f"    [TN]: {tn:6d} | [FP]: {fp:6d}")
+        print(f"    [FN]: {fn:6d} | [TP]: {tp:6d}")
+        print("-" * 45)
+        print(f"Threshold {t}: Accuracy {r['accuracy']*100:.2f}% | Precision {r['precision']*100:.2f}% | Recall {r['recall']*100:.2f}% | F1 Score {r['f1_score']*100:.2f}%")
+        print("=" * 45)
