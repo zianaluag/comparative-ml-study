@@ -184,16 +184,15 @@ p {
   font-size: 1.12rem;
 }
 
-/* Section 3: Dataset (Flexbox Row) */
+/* Section 3: Dataset */
 .dataset-row {
-  display: flex;
-  align-items: flex-start;
-  gap: 2.25rem;
+  display: grid;
+  grid-template-columns: minmax(0, 4fr) minmax(0, 5fr);
+  align-items: start;
+  gap: clamp(1.25rem, 3vw, 2.25rem);
 }
 
 .dataset-map-wrapper {
-  flex: 0 0 44%;
-  width: 44%;
   border-radius: 16px;
   overflow: hidden;
 }
@@ -203,17 +202,15 @@ p {
 }
 
 .dataset-right {
-  flex: 1;
   display: flex;
   flex-direction: column;
-  gap: 2rem;
+  gap: clamp(1rem, 3vw, 2rem);
 }
 
 .dataset-card {
   display: flex;
   flex-direction: column;
   gap: 1.25rem;
-  padding: 2rem 2.25rem;
 }
 
 .dataset-card p {
@@ -221,7 +218,7 @@ p {
 }
 
 .dataset-chart-card {
-  padding: 1.5rem;
+  padding: clamp(1rem, 3vw, 1.5rem);
   display: flex;
   flex-direction: column;
   justify-content: center;
@@ -229,40 +226,45 @@ p {
   gap: 0.75rem;
 }
 
+.dataset-chart-card figcaption {
+  text-align: center;
+}
+
 .category-chart-img {
   width: 100%;
+  max-width: 716px;
   height: auto;
   border-radius: 8px;
   display: block;
 }
 
-/* Section 4: Models (Flexbox Row) */
+/* Section 4: Models */
 .models-grid {
-  display: flex;
-  gap: 2.25rem;
-  margin-bottom: 2.25rem;
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 1.25rem clamp(1.25rem, 3vw, 2.25rem);
+  margin-bottom: clamp(1.25rem, 3vw, 2.25rem);
 }
 
 .model-column {
-  flex: 1;
-  display: flex;
-  flex-direction: column;
+  display: grid;
+  grid-row: span 2;
+  grid-template-rows: subgrid;
 }
 
 .model-title {
   font-size: 1.35rem;
   text-align: center;
-  margin-bottom: 1.25rem;
+  text-wrap: balance;
+  align-self: end;
 }
 
 .model-card {
-  flex: 1;
-  padding: 2rem 1.75rem;
+  padding-inline: clamp(1.125rem, 3vw, 1.75rem);
 }
 
 .model-card p {
   font-size: 1.05rem;
-  text-align: justify;
 }
 
 .summary-card p {
@@ -436,16 +438,21 @@ p {
 @media (max-width: 900px) {
   .dataset-row,
   .models-grid {
-    flex-direction: column;
+    grid-template-columns: 1fr;
+  }
+
+  .models-grid {
+    row-gap: 1.5rem;
+  }
+
+  .model-column {
+    grid-row: auto;
+    grid-template-rows: auto;
+    gap: 0.75rem;
   }
 
   .heatmaps-row {
     grid-template-columns: 1fr;
-  }
-
-  .dataset-map-wrapper {
-    flex: 1 1 100%;
-    width: 100%;
   }
 
   .team-row {
