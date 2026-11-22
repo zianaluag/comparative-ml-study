@@ -6,6 +6,7 @@ import zanderAvatar from "./assets/ian.png";
 import bernardAvatar from "./assets/bernard.png";
 import frannieAvatar from "./assets/frannie.png";
 import desmondAvatar from "./assets/desmond.png";
+import categoryChart from "./assets/category-chart.png";
 
 function App() {
   // Automatically resize the Datawrapper iframe height
@@ -42,6 +43,7 @@ function App() {
             <a href="#home" className="nav-home">Home</a>
             <a href="#dataset" className="nav-dataset">Dataset</a>
             <a href="#models" className="nav-models">Models</a>
+            <a href="#results" className="nav-results">Results</a>
             <a href="#about" className="nav-about">About Us</a>
           </nav>
         </div>
@@ -121,40 +123,50 @@ function App() {
               />
             </div>
 
-            <div className="card dataset-card">
-              <p>
-                Our dataset integrates public infrastructure contract records
-                from the{" "}
-                <span className="text-teal">BetterGov Open Data Portal</span>{" "}
-                and project-level schedule and bidding records from the{" "}
-                <span className="text-teal">DPWH Transparency Portal</span>,
-                spanning <span className="text-orange">215,277 contracts</span>{" "}
-                across <span className="text-orange">19 regions</span> and{" "}
-                <span className="text-orange">
-                  220 District Engineering Offices
-                </span>{" "}
-                (2016–2026).
-              </p>
+            <div className="dataset-right">
+              <div className="card dataset-card">
+                <p>
+                  Our dataset integrates public infrastructure contract records
+                  from the{" "}
+                  <span className="text-teal">BetterGov Open Data Portal</span>{" "}
+                  and project-level schedule and bidding records from the{" "}
+                  <span className="text-teal">DPWH Transparency Portal</span>,
+                  spanning <span className="text-orange">215,277 contracts</span>{" "}
+                  across <span className="text-orange">19 regions</span> and{" "}
+                  <span className="text-orange">
+                    220 District Engineering Offices
+                  </span>{" "}
+                  (2016–2026).
+                </p>
 
-              <p>
-                Each entry captures pre-execution contract attributes—including
-                approved budget (median{" "}
-                <span className="text-teal">₱9.85M</span>), infrastructure
-                category (roads, buildings, flood control, bridges, and water
-                systems), contractor, funding source, geographic coordinates,
-                and contract effectivity, expiry, and actual completion dates.
-              </p>
+                <p>
+                  Each entry captures pre-execution contract attributes—including
+                  approved budget (median{" "}
+                  <span className="text-teal">₱9.85M</span>), infrastructure
+                  category (roads, buildings, flood control, bridges, and water
+                  systems), contractor, funding source, geographic coordinates,
+                  and contract effectivity, expiry, and actual completion dates.
+                </p>
 
-              <p>
-                Evaluating{" "}
-                <span className="text-pink">
-                  188,401 completed contracts
-                </span>{" "}
-                with verified timelines,{" "}
-                <span className="text-pink">24.16% (45,514 projects)</span>{" "}
-                finished past their contract expiry dates, with regional delay
-                rates varying sharply across the archipelago.
-              </p>
+                <p>
+                  Evaluating{" "}
+                  <span className="text-pink">
+                    188,401 completed contracts
+                  </span>{" "}
+                  with verified timelines,{" "}
+                  <span className="text-pink">24.16% (45,514 projects)</span>{" "}
+                  finished past their contract expiry dates, with regional delay
+                  rates varying sharply across the archipelago.
+                </p>
+              </div>
+
+              <div className="card dataset-chart-card">
+                <img
+                  src={categoryChart}
+                  alt="Overall percentage of Delayed Projects by Category"
+                  className="category-chart-img"
+                />
+              </div>
             </div>
           </div>
         </section>
@@ -214,7 +226,178 @@ function App() {
           </div>
         </section>
 
-        {/* Section 5: Team */}
+        {/* Section 5: Model Results & Discussion (Spline Logistic Regression vs. KNN) */}
+        <section id="results" className="section results-section">
+          <h2 className="section-heading text-orange">
+            Preliminary Results &amp; Discussion
+          </h2>
+
+          <div className="heatmaps-row">
+            {/* Heatmap 1: Spline Logistic Regression */}
+            <div className="card heatmap-panel">
+              <h3 className="heatmap-title text-orange">
+                Spline Logistic Regression
+              </h3>
+
+              <div className="cm-grid">
+                <div className="cm-row">
+                  <div className="cm-cell cell-navy">
+                    <span className="cm-label">TP</span>
+                    <span className="cm-value">15,949</span>
+                    <span className="cm-pct">37%</span>
+                  </div>
+                  <div className="cm-cell cell-steel">
+                    <span className="cm-label">FN</span>
+                    <span className="cm-value">5,933</span>
+                    <span className="cm-pct">14%</span>
+                  </div>
+                </div>
+                <div className="cm-row">
+                  <div className="cm-cell cell-mid">
+                    <span className="cm-label">FP</span>
+                    <span className="cm-value">9,397</span>
+                    <span className="cm-pct">22%</span>
+                  </div>
+                  <div className="cm-cell cell-royal">
+                    <span className="cm-label">TN</span>
+                    <span className="cm-value">11,405</span>
+                    <span className="cm-pct">27%</span>
+                  </div>
+                </div>
+              </div>
+
+              <span className="heatmap-subtitle text-orange">
+                Decision Threshold at 0.2
+              </span>
+
+              <div className="metrics-strip">
+                <div className="metric-pill">
+                  <span className="metric-name">Accuracy</span>
+                  <span className="metric-val text-cream">64.08%</span>
+                </div>
+                <div className="metric-pill">
+                  <span className="metric-name">Recall</span>
+                  <span className="metric-val text-teal">72.89%</span>
+                </div>
+                <div className="metric-pill">
+                  <span className="metric-name">Precision</span>
+                  <span className="metric-val text-orange">62.93%</span>
+                </div>
+                <div className="metric-pill">
+                  <span className="metric-name">F1-Score</span>
+                  <span className="metric-val text-pink">0.68</span>
+                </div>
+              </div>
+            </div>
+
+            {/* Heatmap 2: KNN */}
+            <div className="card heatmap-panel">
+              <h3 className="heatmap-title text-pink">
+                KNN Heatmap
+              </h3>
+
+              <div className="cm-grid">
+                <div className="cm-row">
+                  <div className="cm-cell cell-mid">
+                    <span className="cm-label">TP</span>
+                    <span className="cm-value">7,335</span>
+                    <span className="cm-pct">17%</span>
+                  </div>
+                  <div className="cm-cell cell-royal">
+                    <span className="cm-label">FN</span>
+                    <span className="cm-value">14,547</span>
+                    <span className="cm-pct">34%</span>
+                  </div>
+                </div>
+                <div className="cm-row">
+                  <div className="cm-cell cell-light">
+                    <span className="cm-label">FP</span>
+                    <span className="cm-value">2,548</span>
+                    <span className="cm-pct">6%</span>
+                  </div>
+                  <div className="cm-cell cell-navy">
+                    <span className="cm-label">TN</span>
+                    <span className="cm-value">18,254</span>
+                    <span className="cm-pct">43%</span>
+                  </div>
+                </div>
+              </div>
+
+              <span className="heatmap-subtitle text-pink">
+                Distance-Based Neighbor Classification
+              </span>
+
+              <div className="metrics-strip">
+                <div className="metric-pill">
+                  <span className="metric-name">Accuracy</span>
+                  <span className="metric-val text-cream">59.95%</span>
+                </div>
+                <div className="metric-pill">
+                  <span className="metric-name">Recall</span>
+                  <span className="metric-val text-pink">33.52%</span>
+                </div>
+                <div className="metric-pill">
+                  <span className="metric-name">Precision</span>
+                  <span className="metric-val text-teal">74.22%</span>
+                </div>
+                <div className="metric-pill">
+                  <span className="metric-name">F1-Score</span>
+                  <span className="metric-val text-orange">0.46</span>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          {/* Comparative Analysis & Discussion */}
+          <div className="card discussion-card">
+            <h3 className="discussion-heading text-teal">
+              Comparative Analysis &amp; Oversight Implications
+            </h3>
+
+                  
+            {/* <p> WILL UPDATE TOMO
+              Evaluated across the same test split of{" "}
+              <span className="text-orange">42,684 contracts</span> (21,882
+              delayed and 20,802 on-time),{" "}
+              <span className="text-orange">Spline Logistic Regression</span>{" "}
+              and <span className="text-pink">k-Nearest Neighbors (KNN)</span>{" "}
+              demonstrate sharply contrasting classification behaviors and error
+              trade-offs.
+            </p>
+
+            <p>
+              <span className="text-pink">KNN</span> operates conservatively,
+              assigning a delay label only when a contract&apos;s nearest
+              historical neighbors are predominantly delayed. While this yields
+              strong <span className="text-teal">precision (74.22%)</span> and{" "}
+              <span className="text-teal">specificity (87.75%)</span> with a
+              low false-alarm rate (6% of total predictions), it misses
+              two-thirds of truly delayed projects—resulting in{" "}
+              <span className="text-pink">14,547 false negatives (34%)</span>,{" "}
+              <span className="text-pink">33.52% recall</span>, and an overall{" "}
+              <span className="text-orange">F1-score of 0.46</span>.
+            </p>
+
+            <p>
+              By contrast, lowering the decision threshold to{" "}
+              <span className="text-orange">0.2</span> shifts{" "}
+              <span className="text-orange">Spline Logistic Regression</span>{" "}
+              toward proactive risk detection. It captures{" "}
+              <span className="text-teal">72.89% of all delayed contracts</span>{" "}
+              (15,949 true positives), cutting false negatives by more than half
+              (down to 5,933) and boosting both{" "}
+              <span className="text-teal">accuracy (64.08%)</span> and{" "}
+              <span className="text-teal">F1-score (0.68)</span>. Although the
+              lower threshold increases false positives to 22% (62.93%
+              precision), prioritizing high recall is substantially better
+              aligned with public infrastructure oversight, where missing an
+              at-risk contract carries far greater financial and community cost
+              than auditing an on-time project.
+            </p> */}
+          </div>
+        </section>
+
+        {/* Section 6: Team */}
         <section id="about" className="section team-section">
           <h2 className="section-heading text-orange">Team</h2>
 
