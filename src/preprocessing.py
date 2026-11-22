@@ -9,6 +9,9 @@ import spline_logreg as sl
 from datetime import datetime
 import textwrap
 import numpy as np
+
+CATEGORICAL_COLUMNS = ("region", "province", "category", "componentCategory", "contractor")
+
 # Supposed duration of the infrastructure projects before exceeding expiry data
 def planned_duration(row):
     if row["expiryDate"] is None or row["contractEffectivityDate"] is None:
@@ -353,8 +356,9 @@ if __name__ == "__main__":
 
     print(f"Training samples: {len(feat_train)}")
     print(f"Testing samples: {len(feat_test)}")
-    cat_columns = ["region", "province", "category", "componentCategory", "contractor"]
-    encoded_train, encoded_test = encode_categoricals(feat_train, feat_test, cat_columns, status_train)
+    encoded_train, encoded_test = encode_categoricals(
+        feat_train, feat_test, CATEGORICAL_COLUMNS, status_train
+    )
     
     normalized_train, normalized_test = normalize(encoded_train, encoded_test)
 
@@ -391,7 +395,7 @@ if __name__ == "__main__":
     print("\nSelect model method to run:")
     print("  [1] Standard NumPy KNN")
     print("  [2] Spline Logistic Regression")
-    print("  [3] XGBoost")
+    print("  [3] Gradient Boosted Trees (XGBoost-style)")
     choice = input("Enter choice (1/2/3): ").strip()
 
     if choice == "1":
@@ -399,4 +403,6 @@ if __name__ == "__main__":
     elif choice == "2":
         run_spline_logreg(encoded_train, status_train, encoded_test, status_test)
     elif choice == "3":
-        print("wala pa")
+        from gradient_boosted_trees import run_gradient_boosted_trees
+
+        run_gradient_boosted_trees(encoded_train, status_train, encoded_test, status_test)
