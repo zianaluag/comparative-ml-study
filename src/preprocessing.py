@@ -5,6 +5,7 @@ import evaluate_model
 from knn import KNN
 from datetime import datetime
 import textwrap
+import numpy as np
 # Supposed duration of the infrastructure projects before exceeding expiry data
 def planned_duration(row):
     if row["expiryDate"] is None or row["contractEffectivityDate"] is None:
@@ -271,14 +272,16 @@ if __name__ == "__main__":
    #KNN evaluation, uncomment this later, add something like a 1 2 3 to choose which method
    #you want to run when all methods have been coded
     """print("\n--- Initializing and Training Standard NumPy KNN ---")
+    x_train = np.asarray(normalized_train)
+    y_train = np.asarray(status_train)
+    x_test = np.asarray(normalized_test)
     knn_model = KNN(k=5)
-    knn_model.fit(normalized_train, status_train)
-    predictions = knn_model.predict(normalized_test)
+    knn_model.fit(x_train, y_train)
+    predictions = knn_model.predict(x_test)
     results = evaluate_model(status_test, predictions)
     cm = results["confusion_matrix"]
     tn, fp = cm[0][0], cm[0][1]
     fn, tp = cm[1][0], cm[1][1]
-
     print("\n" + "=" * 45)
     print("        NUMPY KNN FULL EVALUATION RESULTS         ")
     print("=" * 45)
@@ -290,4 +293,4 @@ if __name__ == "__main__":
     print(f"Precision: {results['precision'] * 100:6.2f}%")
     print(f"Recall:    {results['recall'] * 100:6.2f}%")
     print(f"F1-Score:  {results['f1_score'] * 100:6.2f}%")
-    print("=" * 45)*/"""
+    print("=" * 45)"""
