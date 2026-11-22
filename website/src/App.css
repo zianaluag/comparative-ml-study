@@ -16,6 +16,7 @@
 
 html {
   scroll-behavior: smooth;
+  scroll-padding-top: 5.5rem;
   font-family: "Helvetica Neue", Helvetica, Arial, sans-serif;
   font-weight: 700;
   color: var(--cream);
@@ -63,7 +64,7 @@ p {
   z-index: 100;
   width: 100%;
   background-color: var(--charcoal);
-  padding: 0.75rem 2.5rem;
+  padding: 0.75rem clamp(1rem, 4vw, 2.5rem);
 }
 
 .nav-container {
@@ -72,7 +73,11 @@ p {
   margin: 0 auto;
   display: flex;
   align-items: center;
-  gap: 3.5rem;
+  gap: clamp(1.25rem, 4vw, 3.5rem);
+}
+
+.logo-link {
+  flex: 0 0 auto;
 }
 
 .logo {
@@ -83,11 +88,16 @@ p {
 
 .nav-links {
   display: flex;
+  flex-wrap: wrap;
   align-items: center;
-  gap: 2.75rem;
+  column-gap: clamp(0.75rem, 5vw - 1.25rem, 2.75rem);
 }
 
 .nav-links a {
+  display: inline-flex;
+  align-items: center;
+  min-height: 2.75rem;
+  white-space: nowrap;
   text-decoration: none;
   font-size: 1.25rem;
   transition: opacity 0.2s ease;
@@ -442,19 +452,47 @@ p {
   .team-member {
     flex: 0 1 42%;
   }
+}
+
+@media (max-width: 40rem) {
+  html {
+    scroll-padding-top: 7.5rem;
+  }
+
+  .navbar {
+    padding-block: 0.5rem;
+  }
 
   .nav-container {
-    gap: 1.5rem;
+    flex-direction: column;
+    gap: 0.25rem;
+  }
+
+  .logo {
+    height: 4.75rem;
+    margin-block: -1.125rem;
   }
 
   .nav-links {
-    flex-wrap: wrap;
-    gap: 1.25rem;
+    justify-content: center;
+    column-gap: 0.75rem;
+  }
+}
+
+@media (max-width: 28rem) {
+  html {
+    scroll-padding-top: 10rem;
   }
 }
 
 @media (max-width: 540px) {
   .team-member {
     flex: 1 1 100%;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  html {
+    scroll-behavior: auto;
   }
 }
