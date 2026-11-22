@@ -3,14 +3,7 @@ from datetime import datetime
 import os
 
 BASE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
-DATASET_DIR = os.path.join(BASE_DIR, "datasets")
-
-
-def get_dataset_path():
-    for file in os.listdir(DATASET_DIR):
-        if file.endswith(".csv"):
-            return os.path.join(DATASET_DIR, file)
-    return None
+DATASET_PATH = os.path.join(BASE_DIR, "datasets", "dpwh_data.csv")
 
 
 def load_csv():
@@ -18,14 +11,8 @@ def load_csv():
     skipped = 0
     seen_ids = set() # uses a hash table to check for duplicate ids instantly
 
-    # Load file by using get_dataset_path helper by joining the base dir and dataset dir
-    path = get_dataset_path()
-    if path is None:
-        print("No csv file found in dataset folder\n")
-        return rows
-    
     try:
-        with open(path, newline="", encoding="utf-8-sig") as f:
+        with open(DATASET_PATH, newline="", encoding="utf-8-sig") as f:
             reader = csv.DictReader(f)
             for row in reader:
                 # Checks for inconsistencies in data (ie missing data)
@@ -74,8 +61,8 @@ def load_csv():
                     "componentCategory": component_cat,
                 })
     
-    except OSError:
-        print("Error loading file")
+    except OSError as error:
+        print(f"Error loading {DATASET_PATH}: {error.strerror}")
 
     print(f"Loaded {len(rows)} rows, skipped {skipped}")
     return rows
