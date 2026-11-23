@@ -1,4 +1,4 @@
-import { useEffect } from "react";
+import { useEffect, useRef, useState } from "react";
 import "./App.css";
 import logo from "./assets/fantastic-four-logo.png";
 import bgImage from "./assets/page-background.png";
@@ -46,8 +46,8 @@ const modelResults = [
 
 function ComparisonTable() {
   return (
-    <div className="card scores-card">
-      <h3 className="discussion-heading text-teal" id="scores-heading">Test set scores</h3>
+    <div className="scores-card">
+      <h3 className="discussion-heading" id="scores-heading">Test set scores</h3>
       <div className="scores-scroll" role="region" aria-labelledby="scores-heading" tabIndex={0}>
         <table className="scores-table" aria-labelledby="scores-heading">
           <thead>
@@ -113,13 +113,13 @@ function ConfusionMatrix({ name, color, tp, fn, fp, tn, total }) {
 
 function FlagChart() {
   const groups = [
-    { label: "Delays caught per 100 delayed projects", rate: "recall" },
-    { label: "False alarms per 100 projects within the allowance", rate: "falseAlarmRate" },
+    { label: "Delayed projects", rate: "recall" },
+    { label: "Projects within the allowance", rate: "falseAlarmRate" },
   ];
 
   return (
-    <figure className="card flag-chart">
-      <figcaption className="discussion-heading text-teal">Flags per 100 projects</figcaption>
+    <figure className="flag-chart">
+      <figcaption className="discussion-heading">Flags per 100 projects</figcaption>
       {groups.map(({ label, rate }) => (
         <div className="flag-group" key={rate}>
           <h4>{label}</h4>
@@ -138,6 +138,83 @@ function FlagChart() {
         </div>
       ))}
     </figure>
+  );
+}
+
+const sections = [
+  ["home", "Overview"],
+  ["dataset", "Dataset"],
+  ["models", "Models"],
+  ["results", "Results"],
+  ["limitations", "Limitations"],
+  ["conclusion", "Conclusion"],
+  ["about", "Team"],
+  ["references", "References"],
+];
+
+function SiteHeader() {
+  const [currentSection, setCurrentSection] = useState("home");
+  const header = useRef(null);
+
+  useEffect(() => {
+    const targets = sections.map(([id]) => document.getElementById(id));
+    function updateSection() {
+      const marker = header.current.offsetHeight + 24;
+      const current = targets.findLast((section) => section.getBoundingClientRect().top <= marker);
+      const atBottom = Math.ceil(window.scrollY + window.innerHeight) >= document.documentElement.scrollHeight;
+      setCurrentSection(atBottom ? "references" : (current?.id ?? "home"));
+    }
+
+    if (window.location.hash && window.scrollY === 0) {
+      const target = document.getElementById(window.location.hash.slice(1));
+      target?.scrollIntoView({ behavior: "instant" });
+    }
+    updateSection();
+    window.addEventListener("scroll", updateSection, { passive: true });
+    window.addEventListener("resize", updateSection);
+    return () => {
+      window.removeEventListener("scroll", updateSection);
+      window.removeEventListener("resize", updateSection);
+    };
+  }, []);
+
+  function jumpToSection(event) {
+    const id = event.target.value;
+    if (window.location.hash === "#" + id) {
+      document.getElementById(id).scrollIntoView();
+    } else {
+      window.location.hash = id;
+    }
+  }
+
+  return (
+    <header className="navbar" ref={header}>
+      <div className="nav-container">
+        <a href="#home" className="brand" aria-label="DPWH Project Delay Study, overview">
+          <img src={logo} alt="" className="logo" />
+          <span className="site-name">DPWH Project Delay Study</span>
+        </a>
+        <nav aria-label="Project sections">
+          <div className="nav-links">
+            {sections.map(([id, label]) => (
+              <a key={id} href={"#" + id} aria-current={currentSection === id ? "location" : undefined}>
+                {label}
+              </a>
+            ))}
+          </div>
+          <label className="section-picker">
+            Jump to
+            <select
+              aria-label="Jump to section"
+              value={currentSection}
+              onChange={jumpToSection}
+            >
+              {sections.map(([id, label]) => <option key={id} value={id}>{label}</option>)}
+            </select>
+          </label>
+        </nav>
+      </div>
+    </header>
   );
 }
 
@@ -162,86 +239,53 @@ function App() {
   }, []);
 
   return (
-    <div
-      className="page"
-      style={{ backgroundImage: `url(${bgImage})` }}
-    >
-      {/* Top Navigation */}
-      <header className="navbar">
-        <div className="nav-container">
-          <a href="#home" className="logo-link">
-            <img src={logo} alt="Fantastic 4 Logo" className="logo" />
-          </a>
-          <nav className="nav-links">
-            <a href="#home" className="nav-home">Home</a>
-            <a href="#dataset" className="nav-dataset">Dataset</a>
-            <a href="#models" className="nav-models">Models</a>
-            <a href="#results" className="nav-results">Results</a>
-            <a href="#about" className="nav-about">About Us</a>
-          </nav>
-        </div>
-      </header>
+    <div className="page">
+      <a className="skip-link" href="#main-content">Skip to study</a>
+      <SiteHeader />
 
-      <main className="content">
-        {/* Section 1: Hero */}
-        <section id="home" className="section hero-section">
-          <h1 className="hero-title">
-            <span className="hero-number">3</span> Approaches to
-            <br />
-            Predicting
-            <br />
-            <span className="text-teal">Contract Risk</span>
-          </h1>
+      <main className="content" id="main-content" tabIndex={-1}>
+        <div id="home" className="study-intro" style={{ "--intro-art": `url(${bgImage})` }}>
+          <div className="intro-inner">
+            <section className="hero-section" aria-labelledby="study-title">
+              <h1 id="study-title" className="hero-title">
+                <span className="hero-number">3</span> Approaches to Predicting{" "}
+                <span className="text-teal">Contract Risk</span>
+              </h1>
+              <p className="hero-text">
+                A bridge that opens late can mean a longer trip to school or work.
+                We asked whether the Department of Public Works and Highways (DPWH)
+                could use the details available at contract award to decide which
+                projects need an early schedule check. We compared{" "}
+                <span className="text-orange">Spline Logistic Regression</span>,{" "}
+                <span className="text-teal">
+                  XGBoost-style Gradient Boosted Trees
+                </span>
+                , and{" "}
+                <span className="text-pink">k-Nearest Neighbors</span> on the same
+                test projects.
+              </p>
+            </section>
 
-          <p className="hero-text">
-            A bridge that opens late can mean a longer trip to school or work.
-            We asked whether the Department of Public Works and Highways (DPWH)
-            could use the details available at contract award to decide which
-            projects need an early schedule check. We compared{" "}
-            <span className="text-orange">Spline Logistic Regression</span>,{" "}
-            <span className="text-teal">
-              XGBoost-style Gradient Boosted Trees
-            </span>
-            , and{" "}
-            <span className="text-pink">k-Nearest Neighbors</span> on the same
-            test projects.
-          </p>
-        </section>
-
-        {/* Section 2: Abstract */}
-        <section id="abstract" className="section abstract-section">
-          <h2 className="section-heading text-orange">Abstract</h2>
-          <div className="card abstract-card">
-            <p>
-              We compared delay rates across regions and project types, then tested
-              three models on the same 42,684 contracts. Boosted trees caught about
-              73 of every 100 delayed projects. KNN was right most often when it
-              raised a flag, though it caught only 34 of every 100 delays.
-            </p>
+            <section id="abstract" className="abstract-section" aria-labelledby="abstract-heading">
+              <h2 id="abstract-heading">Abstract</h2>
+              <p>
+                We compared delay rates across regions and project types, then tested
+                three models on the same 42,684 contracts. Boosted trees caught about{" "}
+                <strong>73 of every 100</strong> delayed projects. KNN was right most often when it
+                raised a flag, though it caught only <strong>34 of every 100</strong> delays.
+              </p>
+              <a className="results-link" href="#results">View results</a>
+            </section>
           </div>
-        </section>
+        </div>
 
         {/* Section 3: Dataset */}
         <section id="dataset" className="section dataset-section">
-          <h2 className="section-heading text-orange">Dataset</h2>
+          <h2 className="section-heading">Dataset</h2>
 
-          <div className="dataset-row">
-            <div className="dataset-map-wrapper">
-              <iframe
-                title="DPWH Infrastructure Project Delay Rates Across Philippine Regions"
-                aria-label="Choropleth map"
-                id="datawrapper-chart-Qc79t"
-                src="https://datawrapper.dwcdn.net/Qc79t/8/"
-                scrolling="no"
-                frameBorder="0"
-                style={{ width: "0", minWidth: "100%", border: "none" }}
-                height="936"
-                data-external="1"
-              />
-            </div>
-
-            <div className="dataset-right">
-              <div className="card dataset-card">
+          <div className="dataset-grid">
+            <div className="dataset-info">
+              <div className="dataset-text">
                 <p>
                   Our dataset integrates public infrastructure contract records
                   from the{" "}
@@ -252,30 +296,21 @@ function App() {
                   <a className="text-teal" href="https://transparency.dpwh.gov.ph/">
                     DPWH Transparency Portal
                   </a> (BetterGov.ph, n.d.; Department of Public Works and Highways, n.d.),
-                  spanning <span className="text-orange">215,277 contracts</span>{" "}
-                  across <span className="text-orange">19 regions</span> with{" "}
-                  <span className="text-orange">
-                    220 location labels
-                  </span>{" "}
-                  in the province field (2016-2026).
+                  spanning 215,277 contracts across 19 regions with 220 location
+                  labels in the province field (2016-2026).
                 </p>
 
                 <p>
                   We train on budget, infrastructure year, planned duration,
                   latitude, longitude, region, province, category, component
                   category, and contractor. The median budget in the source
-                  records is <span className="text-teal">₱9.85M</span>.
+                  records is ₱9.85M.
                 </p>
 
                 <p>
-                  Among{" "}
-                  <span className="text-pink">
-                    188,401 completed contracts
-                  </span>{" "}
-                  with both dates recorded,{" "}
-                  <span className="text-pink">24.16% (45,514 projects)</span>{" "}
-                  finished past their recorded expiry dates. This describes the
-                  raw records.
+                  Among 188,401 completed contracts with both dates recorded,
+                  24.16% (45,514 projects) finished past their recorded expiry
+                  dates. This describes the raw records.
                 </p>
 
                 <p>
@@ -288,9 +323,11 @@ function App() {
                 </p>
               </div>
 
-              <figure className="card dataset-chart-card">
+              <figure>
                 <img
                   src={categoryChart}
+                  width="716"
+                  height="586"
                   alt="Percentage of projects labeled delayed by component category"
                   className="category-chart-img"
                 />
@@ -300,58 +337,59 @@ function App() {
                 </figcaption>
               </figure>
             </div>
+
+            <figure className="dataset-map">
+              <iframe
+                title="DPWH Infrastructure Project Delay Rates Across Philippine Regions"
+                id="datawrapper-chart-Qc79t"
+                src="https://datawrapper.dwcdn.net/Qc79t/8/"
+                scrolling="no"
+                height="936"
+                data-external="1"
+              />
+              <figcaption><a href="https://datawrapper.dwcdn.net/Qc79t/8/">Open regional map</a></figcaption>
+            </figure>
           </div>
         </section>
 
         {/* Section 4: Three Approaches */}
         <section id="models" className="section models-section">
-          <h2 className="section-heading text-orange">Models</h2>
-          <div className="models-grid">
-            <div className="model-column">
-              <h3 className="model-title text-orange">
-                1. Spline Logistic Regression
-              </h3>
-              <div className="card model-card">
-                <p>
-                  Estimates delay probabilities using quadratic splines. The
-                  splines let numerical features have curved effects, such as
-                  planned duration having a different effect for short and long
-                  contracts (James et al., 2021). We use two knots per feature and train for 200
-                  epochs with a learning rate of 0.1 and L2 regularization of 0.01.
-                </p>
-              </div>
-            </div>
+          <h2 className="section-heading">Models</h2>
+          <div className="study-columns">
+            <article>
+              <h3 className="text-orange">Spline Logistic Regression</h3>
+              <p>
+                Estimates delay probabilities using quadratic splines. The
+                splines let numerical features have curved effects, such as
+                planned duration having a different effect for short and long
+                contracts (James et al., 2021). We use two knots per feature and train for 200
+                epochs with a learning rate of 0.1 and L2 regularization of 0.01.
+              </p>
+            </article>
 
-            <div className="model-column">
-              <h3 className="model-title text-teal">
-                2. Gradient Boosted Trees
-              </h3>
-              <div className="card model-card">
-                <p>
-                  Each tree adjusts the earlier trees' predictions (Chen &amp; Guestrin, 2016;
-                  XGBoost Developers, n.d.). We chose the tree count, depth, and
-                  delay threshold by F1 on the last fifth of the training set.
-                  We then trained 90 trees on the full training set with a maximum
-                  depth of 5, a learning rate of 0.1, and L2 regularization of 1.0.
-                </p>
-              </div>
-            </div>
+            <article>
+              <h3 className="text-teal">Gradient Boosted Trees</h3>
+              <p>
+                Each tree adjusts the earlier trees' predictions (Chen &amp; Guestrin, 2016;
+                XGBoost Developers, n.d.). We chose the tree count, depth, and
+                delay threshold by F1 on the last fifth of the training set.
+                We then trained 90 trees on the full training set with a maximum
+                depth of 5, a learning rate of 0.1, and L2 regularization of 1.0.
+              </p>
+            </article>
 
-            <div className="model-column">
-              <h3 className="model-title text-pink">
-                3. k-Nearest Neighbors
-              </h3>
-              <div className="card model-card">
-                <p>
-                  KNN predicts a class by majority vote among nearby examples (W3Schools, n.d.).
-                  We measure similarity using Euclidean distance. The five closest
-                  training projects vote on the delay label.
-                </p>
-              </div>
-            </div>
+            <article>
+              <h3 className="text-pink">k-Nearest Neighbors</h3>
+              <p>
+                KNN predicts a class by majority vote among nearby examples (W3Schools, n.d.).
+                We measure similarity using Euclidean distance. The five closest
+                training projects vote on the delay label.
+              </p>
+            </article>
           </div>
 
-          <div className="card summary-card">
+          <div className="study-note">
+            <h3 className="discussion-heading">Shared preprocessing</h3>
             <p>
               For all three models, we pulled each category’s delay rate toward the overall
               training rate (Micci-Barreca, 2001). Keeping test labels out of these rates
@@ -363,30 +401,36 @@ function App() {
 
         {/* Section 5: Results and Discussion */}
         <section id="results" className="section results-section">
-          <h2 className="section-heading text-orange">
+          <h2 className="section-heading">
             Results &amp; Discussion
           </h2>
 
-          <div className="card results-setup">
-            <p>
-              We sorted contracts by infrastructure year and trained on the first
-              170,734 (80%). Of the 42,684 contracts in the test set, 21,882 were
-              labeled delayed and 20,802 were within the allowance. Both sets include
-              contracts from 2024.
-            </p>
-            <p>
-              Precision tells us how often a flag was right. Recall tells us how
-              many delays we caught. We used F1 to weigh both because a missed
-              delay can go unchecked and a false alarm takes staff time to review
-              (Sokolova &amp; Lapalme, 2009).
-            </p>
+          <div className="results-setup">
+            <div>
+              <h3>Test split</h3>
+              <p>
+                We sorted contracts by infrastructure year and trained on the first
+                170,734 (80%). Of the 42,684 contracts in the test set, 21,882 were
+                labeled delayed and 20,802 were within the allowance. Both sets include
+                contracts from 2024.
+              </p>
+            </div>
+            <div>
+              <h3>Reading the scores</h3>
+              <p>
+                Precision tells us how often a flag was right. Recall tells us how
+                many delays we caught. We used F1 to weigh both because a missed
+                delay can go unchecked and a false alarm takes staff time to review
+                (Sokolova &amp; Lapalme, 2009).
+              </p>
+            </div>
           </div>
 
           <div className="results-grid">
             <ComparisonTable />
-            <div className="card heatmaps-card">
-              <h3 className="discussion-heading text-teal">Confusion matrices</h3>
-              <p>Each cell shows a contract count and its share of all 42,684 test projects.</p>
+            <div className="heatmaps-card">
+              <h3 className="discussion-heading">Confusion matrices</h3>
+              <p>Percentages use all 42,684 test projects.</p>
               {modelResults.map((model) => (
                 <ConfusionMatrix key={model.name} {...model} />
               ))}
@@ -394,8 +438,8 @@ function App() {
             <FlagChart />
           </div>
 
-          <div className="card discussion-card">
-            <h3 className="discussion-heading text-teal">Why the models flagged different projects</h3>
+          <div className="prose-pair">
+            <h3 className="discussion-heading">Why the flags differed</h3>
             <p>
               Boosted trees caught 91 more delays than spline logistic regression
               and raised 1,354 fewer false alarms. A tree can split projects by
@@ -418,51 +462,45 @@ function App() {
         
         {/* Limitations */}
         <section id="limitations" className="section limitations-section">
-          <h2 className="section-heading text-orange">Limitations</h2>
-          <div className="models-grid">
-            <div className="model-column">
-              <h3 className="model-title text-orange">Which projects made it into the test?</h3>
-              <div className="card model-card">
-                <p>
-                  We dropped records with missing required dates or coordinates.
-                  An ongoing contract could enter the comparison once it was
-                  overdue. One still within its schedule had no label yet.
-                  This affects which recent projects we can evaluate. The 5%
-                  allowance is our study's rule for labeling completed projects.
-                </p>
-              </div>
-            </div>
+          <h2 className="section-heading">Limitations</h2>
+          <div className="study-columns">
+            <article>
+              <h3>Which projects qualified?</h3>
+              <p>
+                We dropped records with missing required dates or coordinates.
+                An ongoing contract could enter the comparison once it was
+                overdue. One still within its schedule had no label yet.
+                This affects which recent projects we can evaluate. The 5%
+                allowance is our study's rule for labeling completed projects.
+              </p>
+            </article>
 
-            <div className="model-column">
-              <h3 className="model-title text-teal">What the records leave out</h3>
-              <div className="card model-card">
-                <p>
-                  The records capture a project at one point in time. They leave
-                  out later updates, weather disruptions, and contractor workload.
-                  In its 2022 aid portfolio review, the National Economic and
-                  Development Authority (2022, p. 68) reported that site conditions
-                  or availability delayed 23 projects. Examples included land
-                  acquisition and permits. Our data cannot tell us whether a
-                  particular flagged project faces either problem.
-                </p>
-              </div>
-            </div>
+            <article>
+              <h3>What the records leave out</h3>
+              <p>
+                The records capture a project at one point in time. They leave
+                out later updates, weather disruptions, and contractor workload.
+                In its 2022 aid portfolio review, the National Economic and
+                Development Authority (2022, p. 68) reported that site conditions
+                or availability delayed 23 projects. Examples included land
+                acquisition and permits. Our data cannot tell us whether a
+                particular flagged project faces either problem.
+              </p>
+            </article>
 
-            <div className="model-column">
-              <h3 className="model-title text-pink">What a delay might cost</h3>
-              <div className="card model-card">
-                <p>
-                  Budgets vary widely and some records list a zero budget. The
-                  dataset gives the approved budget but leaves out final project
-                  costs. We can count late projects, but we cannot say how many
-                  pesos an earlier inspection would have saved.
-                </p>
-              </div>
-            </div>
+            <article>
+              <h3>What a delay might cost</h3>
+              <p>
+                Budgets vary widely and some records list a zero budget. The
+                dataset gives the approved budget but leaves out final project
+                costs. We can count late projects, but we cannot say how many
+                pesos an earlier inspection would have saved.
+              </p>
+            </article>
           </div>
 
-          <div className="card discussion-card">
-            <h3 className="discussion-heading text-teal">What we would test next</h3>
+          <div className="study-note">
+            <h3 className="discussion-heading">What we would test next</h3>
             <p>
               We would use one full year of earlier contracts to choose the flag
               thresholds for trees and spline and the number of neighbors for
@@ -474,8 +512,8 @@ function App() {
         </section>
 
         <section id="conclusion" className="section">
-          <h2 className="section-heading text-orange">Conclusion</h2>
-          <div className="card discussion-card">
+          <h2 className="section-heading">Conclusion</h2>
+          <div className="prose-pair">
             <p>
               If a DPWH district office wanted a list of schedules to check
               first, we would start with boosted trees. At the 0.25 threshold
@@ -493,7 +531,27 @@ function App() {
         </section>
         {/* Section 6: Team */}
         <section id="about" className="section team-section">
-          <h2 className="section-heading text-orange">Team</h2>
+          <h2 className="section-heading">Team</h2>
+
+          <div className="team-intro">
+            <p>
+              We are <span className="text-teal">Fantastic 4 vs. VON Doom</span>,
+              a team of BS Computer Science students from the{" "}
+              <span className="text-teal">
+                University of the Philippines Los Baños
+              </span>
+              . We developed this project for our{" "}
+              <span className="text-teal">
+                CMSC 170: Introduction to Artificial Intelligence
+              </span>{" "}
+              course.
+            </p>
+            <p>
+              <a className="text-teal" href="https://github.com/zianaluag/comparative-ml-study">
+                Project repository
+              </a>
+            </p>
+          </div>
 
           <div className="team-row">
             <div className="team-member">
@@ -538,30 +596,10 @@ function App() {
               </span>
             </div>
           </div>
-
-          <div className="card team-card">
-            <p>
-              We are <span className="text-teal">Fantastic 4 vs. VON Doom</span>,
-              a team of BS Computer Science students from the{" "}
-              <span className="text-teal">
-                University of the Philippines Los Baños
-              </span>
-              . We developed this project for our{" "}
-              <span className="text-teal">
-                CMSC 170: Introduction to Artificial Intelligence
-              </span>{" "}
-              course.
-            </p>
-            <p>
-              <a className="text-teal" href="https://github.com/zianaluag/comparative-ml-study">
-                Project repository
-              </a>
-            </p>
-          </div>
         </section>
         <section id="references" className="section" aria-labelledby="references-heading">
-          <h2 id="references-heading" className="section-heading text-orange">References</h2>
-          <ul className="card discussion-card" style={{ listStyle: "none", lineHeight: 1.55, overflowWrap: "anywhere" }}>
+          <h2 id="references-heading" className="section-heading">References</h2>
+          <ul className="reference-list">
             <li>
               BetterGov.ph. (n.d.). [DPWH infrastructure project records]. <em>Open Data Portal</em>.{" "}
               <a className="text-teal" href="https://data.bettergov.ph/datasets/19/resources/406">https://data.bettergov.ph/datasets/19/resources/406</a>
