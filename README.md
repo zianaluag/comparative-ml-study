@@ -15,7 +15,7 @@ We look at how often projects ran late across regions, provinces, project catego
 
 ## Data
 
-We use `datasets/dpwh_data.csv`. The project records come from the [BetterGov Open Data Portal](https://data.bettergov.ph/datasets/19/resources/406). The contract dates come from the [DPWH Transparency Portal](https://transparency.dpwh.gov.ph/).
+We use `datasets/dpwh_infrastructure_contracts.csv`. The project records come from the [BetterGov Open Data Portal](https://data.bettergov.ph/datasets/19/resources/406). The contract dates come from the [DPWH Transparency Portal](https://transparency.dpwh.gov.ph/).
 
 The loader skips duplicate contract IDs and rows with invalid or missing required values. Before splitting the data, we keep projects through infrastructure year 2025 that have a label and a nonnegative planned duration. This gives us 213,418 projects for the comparison. We sort them by infrastructure year and use the first 80% for training (170,734 projects) and the last 20% for testing (42,684 projects). Projects within each year keep their CSV order. Both sets contain 2024 projects.
 
@@ -41,7 +41,7 @@ Rerunning the comparison after an ongoing project passes its expiry date can cha
 
 We implemented all three methods from scratch in Python using NumPy.
 
-- **Spline logistic regression** (`src/spline_logreg.py`) uses quadratic splines for all five numerical features. This lets an extra month on a short contract affect the estimated risk differently from an extra month on a long one. We fit two knots per feature on the training data and scale the expanded features using training statistics. We train for 200 epochs with a learning rate of 0.1 and L2 regularization of 0.01.
+- **Spline logistic regression** (`src/spline_logistic_regression.py`) uses quadratic splines for all five numerical features. This lets an extra month on a short contract affect the estimated risk differently from an extra month on a long one. We fit two knots per feature on the training data and scale the expanded features using training statistics. We train for 200 epochs with a learning rate of 0.1 and L2 regularization of 0.01.
 - **XGBoost-style gradient boosted trees** (`src/gradient_boosted_trees.py`) builds a series of small decision trees. Each tree adjusts the scores from the earlier trees. For the current run, we use 90 trees with a maximum depth of 5, a learning rate of 0.1, L2 regularization of 1.0, and a delay threshold of 0.25. We chose the tree count, depth, and threshold by F1 on the last 20% of the year-sorted training set, then refit on all the training projects.
 - **k-nearest neighbors** (`src/knn.py`) uses features scaled with training statistics. It checks the Euclidean distance to every training project and predicts the most common label among the five closest projects.
 

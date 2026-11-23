@@ -1,7 +1,7 @@
 import numpy as np
 
-from evaluate_model import evaluate_model
-from spline_logreg import sigmoid
+from classification_metrics import evaluate_model
+from spline_logistic_regression import sigmoid
 
 
 def node_score(grad_sum, hess_sum, l2_reg):

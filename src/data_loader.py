@@ -4,7 +4,7 @@ from math import isfinite
 import os
 
 BASE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
-DATASET_PATH = os.path.join(BASE_DIR, "datasets", "dpwh_data.csv")
+DATASET_PATH = os.path.join(BASE_DIR, "datasets", "dpwh_infrastructure_contracts.csv")
 
 
 def load_csv():

@@ -1,12 +1,12 @@
 import { useEffect } from "react";
 import "./App.css";
-import logo from "./assets/logo.png";
-import bgImage from "./assets/bg.png";
-import zanderAvatar from "./assets/ian.png";
-import bernardAvatar from "./assets/bernard.png";
-import frannieAvatar from "./assets/frannie.png";
-import desmondAvatar from "./assets/desmond.png";
-import categoryChart from "./assets/category-chart.png";
+import logo from "./assets/fantastic-four-logo.png";
+import bgImage from "./assets/page-background.png";
+import zanderAvatar from "./assets/ian-avatar.png";
+import bernardAvatar from "./assets/bernard-avatar.png";
+import frannieAvatar from "./assets/frannie-avatar.png";
+import desmondAvatar from "./assets/desmond-avatar.png";
+import categoryChart from "./assets/delay-rates-by-component-category.png";
 
 const modelResults = [
   {

@@ -3,7 +3,7 @@ import textwrap
 import numpy as np
 
 import data_loader
-from evaluate_model import evaluate_model
+from classification_metrics import evaluate_model
 from gradient_boosted_trees import run_gradient_boosted_trees
 from knn import KNN
 from preprocessing import (
@@ -14,7 +14,7 @@ from preprocessing import (
     normalize,
     split_dataset,
 )
-import spline_logreg as sl
+import spline_logistic_regression as sl
 
 
 def run_knn(normalized_train, status_train, normalized_test, status_test, k=5):
