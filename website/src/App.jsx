@@ -328,7 +328,63 @@ function App() {
             </p>
           </div>
         </section>
+        
+        {/* Section 5: Limitations */}
+        <section id="limitations" className="section limitations-section">
+          <h2 className="section-heading text-orange">Limitations</h2>
 
+          <div className="models-grid">
+            <div className="model-column">
+              <h3 className="model-title text-orange">
+                1. Missingness &amp; Censoring Bias
+              </h3>
+              <div className="card model-card">
+                <p>
+                  Merging records across portals leaves gaps and drops entries
+                  missing valid dates or{" "}
+                  <span className="text-orange">latitude/longitude</span>{" "}
+                  coordinates, which may underrepresent certain regions and years.
+                  Excluding uncompleted ongoing contracts and using a{" "}
+                  <span className="text-orange">5% grace window</span> also
+                  introduces survivorship and proxy-label bias.
+                </p>
+              </div>
+            </div>
+
+            <div className="model-column">
+              <h3 className="model-title text-teal">
+                2. Static Snapshot &amp; Missing Context
+              </h3>
+              <div className="card model-card">
+                <p>
+                  Because the dataset reflects a{" "}
+                  <span className="text-teal">point-in-time scrape</span>,
+                  post-scrape status updates and approved time extensions are
+                  absent. Public contract metadata also omits on-the-ground
+                  drivers such as{" "}
+                  <span className="text-teal">right-of-way disputes</span>,
+                  weather disruptions, and concurrent contractor workload.
+                </p>
+              </div>
+            </div>
+
+              <div className="model-column">
+              <h3 className="model-title text-pink">
+                3. Data Skew, Cost Gaps &amp; Modeling Trade-Offs
+              </h3>
+              <div className="card model-card">
+                <p>
+                  Contract records span shifting procurement rules across years,
+                  exhibit heavy{" "}
+                  <span className="text-pink">budget skew</span> and zero-value
+                  anomalies, and lack final{" "}
+                  <span className="text-pink">actual project costs</span>, only
+                  recording approved contract budgets.
+                </p>
+              </div>
+            </div>
+          </div>
+        </section>
         {/* Section 6: Team */}
         <section id="about" className="section team-section">
           <h2 className="section-heading text-orange">Team</h2>
