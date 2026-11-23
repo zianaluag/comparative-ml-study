@@ -181,7 +181,7 @@ function App() {
                   and project-level schedule and bidding records from the{" "}
                   <a className="text-teal" href="https://transparency.dpwh.gov.ph/">
                     DPWH Transparency Portal
-                  </a>,
+                  </a> (BetterGov.ph, n.d.; Department of Public Works and Highways, n.d.),
                   spanning <span className="text-orange">215,277 contracts</span>{" "}
                   across <span className="text-orange">19 regions</span> with{" "}
                   <span className="text-orange">
@@ -245,7 +245,7 @@ function App() {
                   Estimates delay probabilities using quadratic splines. The
                   splines let numerical features have curved effects, such as
                   planned duration having a different effect for short and long
-                  contracts. We use two knots per feature and train for 200
+                  contracts (James et al., 2021). We use two knots per feature and train for 200
                   epochs with a learning rate of 0.1 and L2 regularization of 0.01.
                 </p>
               </div>
@@ -257,7 +257,8 @@ function App() {
               </h3>
               <div className="card model-card">
                 <p>
-                  Each tree adjusts the earlier trees' predictions. We use 90
+                  Each tree adjusts the earlier trees' predictions (Chen &amp; Guestrin, 2016;
+                  XGBoost Developers, n.d.). We use 90
                   trees with a maximum depth of 5, a learning rate of 0.1, and
                   L2 regularization of 1.0.
                 </p>
@@ -270,8 +271,8 @@ function App() {
               </h3>
               <div className="card model-card">
                 <p>
-                  Evaluates new contracts by retrieving the most similar
-                  historical projects using Euclidean distance. The five closest
+                  KNN predicts a class by majority vote among nearby examples (W3Schools, n.d.).
+                  We measure similarity using Euclidean distance. The five closest
                   training projects vote on the delay label.
                 </p>
               </div>
@@ -280,9 +281,10 @@ function App() {
 
           <div className="card summary-card">
             <p>
-            The training set provided the category delay rates for all three
-            models. The spline model and KNN also scale their inputs using
-            training statistics.
+              For all three models, we pulled each category’s delay rate toward the overall
+              training rate (Micci-Barreca, 2001). Keeping test labels out of these rates
+              prevents data leakage (Kaufman et al., 2011). The spline model and KNN also
+              scale their inputs using training statistics.
             </p>
           </div>
         </section>
@@ -303,7 +305,7 @@ function App() {
               Each percentage in the confusion matrices is a share of the full
               test set. Precision measures how often a delay flag is correct.
               Recall measures how many actual delays we catch, and F1 combines
-              precision and recall.
+              precision and recall (Sokolova &amp; Lapalme, 2009).
             </p>
           </div>
 
@@ -364,6 +366,8 @@ function App() {
                   drivers such as{" "}
                   <span className="text-teal">right-of-way disputes</span>,
                   weather disruptions, and concurrent contractor workload.
+                  Right-of-way acquisition has delayed Philippine infrastructure projects
+                  (National Economic and Development Authority, 2022).
                 </p>
               </div>
             </div>
@@ -452,6 +456,51 @@ function App() {
               </a>
             </p>
           </div>
+        </section>
+        <section id="references" className="section" aria-labelledby="references-heading">
+          <h2 id="references-heading" className="section-heading text-orange">References</h2>
+          <ul className="card discussion-card" style={{ listStyle: "none", lineHeight: 1.55, overflowWrap: "anywhere" }}>
+            <li>
+              BetterGov.ph. (n.d.). [DPWH infrastructure project records]. <em>Open Data Portal</em>.{" "}
+              <a className="text-teal" href="https://data.bettergov.ph/datasets/19/resources/406">https://data.bettergov.ph/datasets/19/resources/406</a>
+            </li>
+            <li>
+              Chen, T., &amp; Guestrin, C. (2016). XGBoost: A scalable tree boosting system. In <em>Proceedings of the 22nd ACM SIGKDD International Conference on Knowledge Discovery and Data Mining</em> (pp. 785–794). Association for Computing Machinery.{" "}
+              <a className="text-teal" href="https://doi.org/10.1145/2939672.2939785">https://doi.org/10.1145/2939672.2939785</a>
+            </li>
+            <li>
+              Department of Public Works and Highways. (n.d.). <em>DPWH infrastructure projects portal</em>.{" "}
+              <a className="text-teal" href="https://transparency.dpwh.gov.ph/">https://transparency.dpwh.gov.ph/</a>
+            </li>
+            <li>
+              James, G., Witten, D., Hastie, T., &amp; Tibshirani, R. (2021). <em>An introduction to statistical learning: With applications in R</em> (2nd ed.). Springer.{" "}
+              <a className="text-teal" href="https://doi.org/10.1007/978-1-0716-1418-1">https://doi.org/10.1007/978-1-0716-1418-1</a>
+            </li>
+            <li>
+              Kaufman, S., Rosset, S., &amp; Perlich, C. (2011). Leakage in data mining: Formulation, detection, and avoidance. In <em>Proceedings of the 17th ACM SIGKDD International Conference on Knowledge Discovery and Data Mining</em> (pp. 556–563). Association for Computing Machinery.{" "}
+              <a className="text-teal" href="https://doi.org/10.1145/2020408.2020496">https://doi.org/10.1145/2020408.2020496</a>
+            </li>
+            <li>
+              Micci-Barreca, D. (2001). A preprocessing scheme for high-cardinality categorical attributes in classification and prediction problems. <em>ACM SIGKDD Explorations Newsletter, 3</em>(1), 27–32.{" "}
+              <a className="text-teal" href="https://doi.org/10.1145/507533.507538">https://doi.org/10.1145/507533.507538</a>
+            </li>
+            <li>
+              National Economic and Development Authority. (2022). <em>2022 official development assistance (ODA) portfolio review report</em>.{" "}
+              <a className="text-teal" href="https://depdev.gov.ph/wp-content/uploads/2023/10/2022-ODA-Portfolio-Review-Report.pdf">https://depdev.gov.ph/wp-content/uploads/2023/10/2022-ODA-Portfolio-Review-Report.pdf</a>
+            </li>
+            <li>
+              Sokolova, M., &amp; Lapalme, G. (2009). A systematic analysis of performance measures for classification tasks. <em>Information Processing &amp; Management, 45</em>(4), 427–437.{" "}
+              <a className="text-teal" href="https://doi.org/10.1016/j.ipm.2009.03.002">https://doi.org/10.1016/j.ipm.2009.03.002</a>
+            </li>
+            <li>
+              W3Schools. (n.d.). <em>Python machine learning: K-nearest neighbors (KNN)</em>.{" "}
+              <a className="text-teal" href="https://www.w3schools.com/python/python_ml_knn.asp">https://www.w3schools.com/python/python_ml_knn.asp</a>
+            </li>
+            <li>
+              XGBoost Developers. (n.d.). <em>XGBoost documentation</em>.{" "}
+              <a className="text-teal" href="https://xgboost.readthedocs.io/en/stable/">https://xgboost.readthedocs.io/en/stable/</a>
+            </li>
+          </ul>
         </section>
       </main>
     </div>

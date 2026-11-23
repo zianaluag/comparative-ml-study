@@ -11,17 +11,17 @@
 
 We’re using past DPWH contracts to see whether we can spot a likely delay when a new contract is awarded. At that point, we already know who the contractor is, where the project will be built, how much is budgeted, and how long the work is supposed to take. If those details can give an early warning, they could help DPWH decide which projects to check on more closely.
 
-We look at how often projects ran late across regions, provinces, project categories, and contractors. We also want to see which of our three models does the best job on newer contracts after training on older ones. For that comparison, we’ll look at both the delays each model misses and the on-time projects it flags.
+Right-of-way acquisition has delayed Philippine infrastructure projects (National Economic and Development Authority, 2022). We look at how often projects ran late across regions, provinces, project categories, and contractors. We also want to see which of our three models does the best job on newer contracts after training on older ones. For that comparison, we’ll look at both the delays each model misses and the on-time projects it flags.
 
 ## Data
 
-We use `datasets/dpwh_infrastructure_contracts.csv`. The project records come from the [BetterGov Open Data Portal](https://data.bettergov.ph/datasets/19/resources/406). The contract dates come from the [DPWH Transparency Portal](https://transparency.dpwh.gov.ph/).
+We use `datasets/dpwh_infrastructure_contracts.csv`. The project records come from the [BetterGov Open Data Portal](https://data.bettergov.ph/datasets/19/resources/406) (BetterGov.ph, n.d.). The contract dates come from the [DPWH Transparency Portal](https://transparency.dpwh.gov.ph/) (Department of Public Works and Highways, n.d.).
 
 The loader skips duplicate contract IDs and rows with invalid or missing required values. Before splitting the data, we keep projects through infrastructure year 2025 that have a label and a nonnegative planned duration. This gives us 213,418 projects for the comparison. We sort them by infrastructure year and use the first 80% for training (170,734 projects) and the last 20% for testing (42,684 projects). Projects within each year keep their CSV order. Both sets contain 2024 projects.
 
 All three methods start with the same 10 inputs. The numerical features are budget, infrastructure year, planned duration, latitude, and longitude. The categorical features are region, province, category, component category, and contractor.
 
-We represent each category with a delay rate pulled toward the overall training rate. We divide the training set into five groups and use the other four groups to calculate the rates for each group. For test rows, we use rates from the entire training set. Unseen categories get the overall training delay rate.
+We represent each category with a delay rate pulled toward the overall training rate (Micci-Barreca, 2001). We divide the training set into five groups and use the other four groups to calculate the rates for each group. For test rows, we use rates from the entire training set. Unseen categories get the overall training delay rate. Keeping test labels out of these calculations prevents data leakage (Kaufman et al., 2011).
 
 ## What counts as delayed?
 
@@ -41,13 +41,13 @@ Rerunning the comparison after an ongoing project passes its expiry date can cha
 
 We implemented all three methods from scratch in Python using NumPy.
 
-- **Spline logistic regression** (`src/spline_logistic_regression.py`) uses quadratic splines for all five numerical features. This lets an extra month on a short contract affect the estimated risk differently from an extra month on a long one. We fit two knots per feature on the training data and scale the expanded features using training statistics. We train for 200 epochs with a learning rate of 0.1 and L2 regularization of 0.01.
-- **XGBoost-style gradient boosted trees** (`src/gradient_boosted_trees.py`) builds a series of small decision trees. Each tree adjusts the scores from the earlier trees. For the current run, we use 90 trees with a maximum depth of 5, a learning rate of 0.1, L2 regularization of 1.0, and a delay threshold of 0.25. We chose the tree count, depth, and threshold by F1 on the last 20% of the year-sorted training set, then refit on all the training projects.
-- **k-nearest neighbors** (`src/knn.py`) uses features scaled with training statistics. It checks the Euclidean distance to every training project and predicts the most common label among the five closest projects.
+- **Spline logistic regression** (`src/spline_logistic_regression.py`) uses quadratic splines for all five numerical features. This lets an extra month on a short contract affect the estimated risk differently from an extra month on a long one (James et al., 2021). We fit two knots per feature on the training data and scale the expanded features using training statistics. We train for 200 epochs with a learning rate of 0.1 and L2 regularization of 0.01.
+- **XGBoost-style gradient boosted trees** (`src/gradient_boosted_trees.py`) builds a series of small decision trees. Each tree adjusts the scores from the earlier trees (Chen & Guestrin, 2016; XGBoost Developers, n.d.). For the current run, we use 90 trees with a maximum depth of 5, a learning rate of 0.1, L2 regularization of 1.0, and a delay threshold of 0.25. We chose the tree count, depth, and threshold by F1 on the last 20% of the year-sorted training set, then refit on all the training projects.
+- **k-nearest neighbors** (`src/knn.py`) uses features scaled with training statistics. KNN predicts the most common label among nearby examples (W3Schools, n.d.). Our implementation checks the Euclidean distance to every training project and uses the five closest projects.
 
 ## Results so far
 
-All three methods report accuracy, precision, recall, F1, and a confusion matrix on the same test split. The 42,684 test projects include 21,882 delayed projects and 20,802 within the allowance. We ran the comparison with Python 3.12.14 and NumPy 2.3.5.
+All three methods report accuracy, precision, recall, F1, and a confusion matrix on the same test split. These metrics summarize correct predictions, missed delays, and false alarms (Sokolova & Lapalme, 2009). The 42,684 test projects include 21,882 delayed projects and 20,802 within the allowance. We ran the comparison with Python 3.12.14 and NumPy 2.3.5.
 
 | Method | Setting | Accuracy | Precision | Recall | F1 |
 | --- | --- | ---: | ---: | ---: | ---: |
@@ -79,3 +79,25 @@ You can also run gradient boosted trees directly.
 ```bash
 python src/gradient_boosted_trees.py
 ```
+
+## References
+
+BetterGov.ph. (n.d.). [DPWH infrastructure project records]. *Open Data Portal*. <https://data.bettergov.ph/datasets/19/resources/406>
+
+Chen, T., & Guestrin, C. (2016). XGBoost: A scalable tree boosting system. In *Proceedings of the 22nd ACM SIGKDD International Conference on Knowledge Discovery and Data Mining* (pp. 785–794). Association for Computing Machinery. <https://doi.org/10.1145/2939672.2939785>
+
+Department of Public Works and Highways. (n.d.). *DPWH infrastructure projects portal*. <https://transparency.dpwh.gov.ph/>
+
+James, G., Witten, D., Hastie, T., & Tibshirani, R. (2021). *An introduction to statistical learning: With applications in R* (2nd ed.). Springer. <https://doi.org/10.1007/978-1-0716-1418-1>
+
+Kaufman, S., Rosset, S., & Perlich, C. (2011). Leakage in data mining: Formulation, detection, and avoidance. In *Proceedings of the 17th ACM SIGKDD International Conference on Knowledge Discovery and Data Mining* (pp. 556–563). Association for Computing Machinery. <https://doi.org/10.1145/2020408.2020496>
+
+Micci-Barreca, D. (2001). A preprocessing scheme for high-cardinality categorical attributes in classification and prediction problems. *ACM SIGKDD Explorations Newsletter, 3*(1), 27–32. <https://doi.org/10.1145/507533.507538>
+
+National Economic and Development Authority. (2022). *2022 official development assistance (ODA) portfolio review report*. <https://depdev.gov.ph/wp-content/uploads/2023/10/2022-ODA-Portfolio-Review-Report.pdf>
+
+Sokolova, M., & Lapalme, G. (2009). A systematic analysis of performance measures for classification tasks. *Information Processing & Management, 45*(4), 427–437. <https://doi.org/10.1016/j.ipm.2009.03.002>
+
+W3Schools. (n.d.). *Python machine learning: K-nearest neighbors (KNN)*. <https://www.w3schools.com/python/python_ml_knn.asp>
+
+XGBoost Developers. (n.d.). *XGBoost documentation*. <https://xgboost.readthedocs.io/en/stable/>
